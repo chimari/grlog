@@ -1,0 +1,97 @@
+##########################################################################
+#   GAOES-RV / Seimei Telescope Observation Log Eeditor  (grlog)         #
+#                         Document file                                  #
+#                                                                        # 
+#                                                                        # 
+#                                  ver 1.0.0 2021/04/28                  # 
+#                               Copyright (C) 2023 Akito Tajitsu         #
+#      Subaru Telescope, National Astronomical Observatory of Japan      #
+#                                        akito.tajitsu_at_nao.ac.jp      # 
+##########################################################################
+
+
+### Introduction ###
+GAOES-RV / Seimei Telescope Observation Log Eeditor (grlog) is a program
+to show /edit /mail observation logs of GAOES-RV of 3.8-m Seimei Telescope,
+Kyoto University.
+
+ You can make a clone of the latest version of its source code
+via Git Hub, using
+  git clone https://github.com/chimari/grlog.git
+in your terminal.
+
+
+### Environment ###
+This program is running under UNIX OSs with X window systems.
+Gtk+3 (recommended) is required.
+You need to use mutt with msmtp to send logs via e-mail 
+(only for the summit system).
+
+xdotool, xgterm and IRAF environment for HDS data reduction (hdsql etc.) 
+are required to be installed to the system, if you want to use quick 
+reduction buttons.
+
+
+### How to Make (for UNIX, Linux & Solaris) ###
+  - Extract archives, go to the extracted directory.
+
+  - (Only if you cloned the source code via GitHub)
+    % touch configure configure.ac aclocal.m4 Makefile.am Makefile.in
+
+  - for Gtk+3
+      % ./configure  --with-gtk3
+
+  - % make
+
+Then, an executable file "hdslog" should be built.
+You can copy this file to other directory as you like.
+
+## How to Run
+  - % grlog <your-data-dir.>
+
+
+## Lock File
+   /tmp/grlog-yyyymmdd.lock
+  will be created during directory scanning.
+   /tmp/.lock_grql.<username>
+  will be created when the quick reduction process (pyraf) is running.
+
+
+## Log Note File
+   HOME$Log/.grlog-yyyymmdd
+  will be created.
+  This file remains even after the program finished.
+
+
+## Mail address list
+  Mail addresses are automatically stocked in
+   HOME$/.hdslog_mail.lst
+  The list is automatically loaded as mail address book when you send
+  a log to observers.
+
+
+### Copyright ###
+   The code in this distribution is Copyright 2005 by Akito Tajitsu.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3, or (at your option)
+   any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+   In addition, as a special exception, A.Tajitsu gives permission to link 
+   this code of this program with the OpenSSL library (or with modified
+   versions of OpenSSL that use the same license as OpenSSL), and distribute
+   linked combinations including the two. You must obey the GNU General 
+   Public License in all respects for all of the code used other than OpenSSL.
+   If you modify this file, you may extend this exception to your version of 
+   the file, but you are not obligated to do so. If you do not wish to do so,
+   delete this exception statement from your version.

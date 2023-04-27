@@ -1,0 +1,20 @@
+EXTRA_DIST = \
+	calendar_icon.png\
+	chrome_icon.png\
+	comet_icon.png\
+	dl_icon.png\
+	efs_icon.png\
+	etc_icon.png\
+	firefox_icon.png\
+	gaoes_icon.png\
+	gaoes-rv_logo_s.png\
+	hoe_icon.png\
+	hsc_icon.png\
+	ie_icon.png\
+	lgs_icon.png\
+	moon_icon.png\
+	pdf_icon.png\
+	pm_icon.png\
+	safari_icon.png\
+	sky_icon.png\
+	subaru_icon.png
