@@ -505,6 +505,7 @@ void prepare_pyraf(typHLOG *hl){
 		    GAOES_PY_GRQL,
 		    NULL);
     copy_file(src, dest);
+    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
     g_free(src);
   }
   g_free(dest);
@@ -520,6 +521,7 @@ void prepare_pyraf(typHLOG *hl){
 		    GAOES_PY_GRQL_BATCH,
 		    NULL);
     copy_file(src, dest);
+    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
     g_free(src);
   }
   g_free(dest);
@@ -535,6 +537,7 @@ void prepare_pyraf(typHLOG *hl){
 		    GAOES_PY_FLAT,
 		    NULL);
     copy_file(src, dest);
+    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
     g_free(src);
   }
   g_free(dest);
@@ -550,6 +553,7 @@ void prepare_pyraf(typHLOG *hl){
 		    GAOES_PY_COMP,
 		    NULL);
     copy_file(src, dest);
+    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
     g_free(src);
   }
   g_free(dest);
@@ -565,6 +569,7 @@ void prepare_pyraf(typHLOG *hl){
 		    GAOES_PY_SPLOT,
 		    NULL);
     copy_file(src, dest);
+    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
     g_free(src);
   }
   g_free(dest);
@@ -580,6 +585,7 @@ void prepare_pyraf(typHLOG *hl){
 		    "login.cl",
 		    NULL);
     copy_file(src, dest);
+    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
     g_free(src);
   }
   g_free(dest);
