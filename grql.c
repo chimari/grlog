@@ -1161,11 +1161,13 @@ gint get_cnt(typHLOG *hl, gint i_file){
 void iraf_obj(typHLOG *hl, gint i_sel, gint i_file){
   gchar *tmp; 
 
-  tmp=g_strdup_printf("%s bash -c \'touch %s;cd %s;%s %s \"%08d\" %s %s %s %s %s %d %d %d %d %d %d;rm -rf %s\'",
+  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s \"%08d\" %s %s %s %s %s %d %d %d %d %d %d;rm -rf %s\'",
 		      hl->ql_terminal,
 		      hl->ql_lock,
 		      hl->wdir,
 		      hl->ql_python,
+		      hl->wdir,
+		      G_DIR_SEPARATOR_S,
 		      GAOES_PY_GRQL,
 		      hl->frame[i_sel].idnum,
 		      hl->ddir,
@@ -1193,16 +1195,18 @@ void iraf_obj(typHLOG *hl, gint i_sel, gint i_file){
 void iraf_obj_splot(typHLOG *hl, gint i_sel, gchar *spec_file){
   gchar *tmp; 
 
-  tmp=g_strdup_printf("%s bash -c \'touch %s;cd %s;%s %s %s %d;rm -rf %s\'",
+  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s %s %d;rm -rf %s\'",
 		      hl->ql_terminal,
 		      hl->ql_lock,
 		      hl->wdir,
 		      hl->ql_python,
+		      hl->wdir,
+		      G_DIR_SEPARATOR_S,
 		      GAOES_PY_SPLOT,
 		      spec_file,
 		      hl->ql_line,
 		      hl->ql_lock);
-
+  
   hl->ql_i=i_sel;
   hl->ql_loop=QL_SPLOT;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
@@ -1263,11 +1267,13 @@ void make_obj_batch(typHLOG *hl, gchar *obj_in){
   gchar *tmp;
   gint i_sel;
 
-  tmp=g_strdup_printf("%s bash -c \'touch %s;cd %s;%s %s %s %s %s %s %s %s %d %d %d %d %d;rm -rf %s\'",
+  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s %s %s %s %s %s %s %d %d %d %d %d;rm -rf %s\'",
 		      hl->ql_terminal,
 		      hl->ql_lock,
 		      hl->wdir,
 		      hl->ql_python,
+		      hl->wdir,
+		      G_DIR_SEPARATOR_S,
 		      GAOES_PY_GRQL_BATCH,
 		      obj_in,
 		      hl->ddir,
@@ -1450,11 +1456,13 @@ void make_flat(typHLOG *hl, gchar *flat_in){
   gint i_sel;
 
 
-  tmp=g_strdup_printf("%s bash -c \'touch %s;cd %s;%s %s %s %s %s %s %s %d %d;rm -rf %s\'",
+  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s %s %s %s %s %s %d %d;rm -rf %s\'",
 		      hl->ql_terminal,
 		      hl->ql_lock,
 		      hl->wdir,
 		      hl->ql_python,
+		      hl->wdir,
+		      G_DIR_SEPARATOR_S,
 		      GAOES_PY_FLAT,
 		      flat_in,
 		      hl->ddir,
@@ -1601,11 +1609,13 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
   if(hl->ql_thar_new) g_free(hl->ql_thar_new);
   hl->ql_thar_new=g_strdup_printf("ThAr.%08d", hl->frame[i_sel].idnum);
 
-  tmp=g_strdup_printf("%s bash -c \'touch %s;cd %s;%s %s \"%08d\" %s %s %s %s;rm -rf %s\'",
+  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s \"%08d\" %s %s %s %s;rm -rf %s\'",
 		      hl->ql_terminal,
 		      hl->ql_lock,
 		      hl->wdir,
 		      hl->ql_python,
+		      hl->wdir,
+		      G_DIR_SEPARATOR_S,
 		      GAOES_PY_COMP,
 		      hl->frame[i_sel].idnum,
 		      hl->ddir,

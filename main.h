@@ -68,7 +68,7 @@
 #define GAOES_ED_X 53
 
 #define QL_PYTHON "python3"
-#define QL_TERMINAL "gnome-terminal -- "
+#define QL_TERMINAL "xterm -geometry 85x10 -e"
 
 enum{QL_THAR, QL_FLAT, QL_OBJECT, QL_OBJECT_BATCH, QL_SPLOT, NUM_QL};
 
