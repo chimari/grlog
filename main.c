@@ -3197,7 +3197,7 @@ void get_option(int argc, char **argv, typHLOG *hl)
 {
   int i_opt;
   int valid=1;
-  gchar *cwdname=NULL;
+  gchar *cwdname=NULL, *dbase;
 
   hl->sdir=NULL;
   hl->wdir=NULL;
@@ -3236,6 +3236,15 @@ void get_option(int argc, char **argv, typHLOG *hl)
 	else{
 	  hl->wdir=g_strdup(argv[i_opt]);
 	}
+	dbase=g_strconcat(hl->wdir,
+			  G_DIR_SEPARATOR_S,
+			  "database",
+			  NULL);
+	if(access(dbase, F_OK)!=0){
+	  mkdir(dbase, (S_IRWXU|S_IRWXG|S_IRWXO));
+	}
+	g_free(dbase);
+	
 	i_opt++;
       }
       else{
