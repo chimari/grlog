@@ -377,6 +377,7 @@ void check_reference_data(typHLOG *hl){
   gchar *ap_fits0, *ec_fits0, *ap_db0, *ec_db0;
   gchar *ap_fits, *ec_fits, *ap_db, *ec_db;
   gchar *fl_fits0, *fl_fits, *ec2_fits0, *ec2_fits;
+  gchar *ms_fits, *ms_fits0, *bz_fits, *bz_fits0;
 
   // Ap
   ap_fits=g_strconcat(hl->wdir,
@@ -488,6 +489,39 @@ void check_reference_data(typHLOG *hl){
   }
   g_free(ec2_fits);
 
+  // Mask
+  ms_fits=g_strconcat(hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      GAOES_MASK,
+		      ".fits",
+		      NULL);
+  if(access(ms_fits, F_OK)!=0){
+    ms_fits0=g_strconcat(hl->sdir,
+			 G_DIR_SEPARATOR_S,
+			 GAOES_MASK,
+			 ".fits",
+			 NULL);
+    copy_file(ms_fits0, ms_fits);
+    g_free(ms_fits0);
+  }
+  g_free(ms_fits);
+  
+  // Blaze
+  bz_fits=g_strconcat(hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      GAOES_BLAZE,
+		      ".fits",
+		      NULL);
+  if(access(bz_fits, F_OK)!=0){
+    bz_fits0=g_strconcat(hl->sdir,
+			 G_DIR_SEPARATOR_S,
+			 GAOES_BLAZE,
+			 ".fits",
+			 NULL);
+    copy_file(bz_fits0, bz_fits);
+    g_free(bz_fits0);
+  }
+  g_free(bz_fits);
 }
 
 
@@ -1167,7 +1201,7 @@ gint get_cnt(typHLOG *hl, gint i_file){
 void iraf_obj(typHLOG *hl, gint i_sel, gint i_file){
   gchar *tmp; 
 
-  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s \"%08d\" %s %s %s %s %s %d %d %d %d %d %d;rm -rf %s\'",
+  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s \"%08d\" %s %s %s %s %s %d %d %d %d %d %s %s %s %d;rm -rf %s\'",
 		      hl->ql_terminal,
 		      hl->ql_lock,
 		      hl->wdir,
@@ -1186,6 +1220,9 @@ void iraf_obj(typHLOG *hl, gint i_sel, gint i_file){
 		      hl->ql_ge_line,
 		      hl->ql_ge_stx,
 		      hl->ql_ge_edx,
+		      (hl->ql_line==16) ? "yes" : "no",
+		      hl->ql_blaze,
+		      hl->ql_mask,
 		      hl->ql_line,
 		      hl->ql_lock);
 
@@ -1241,12 +1278,23 @@ void ql_obj_foreach (GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, 
     
   gtk_tree_model_get (model, iter, COLUMN_FRAME_NUMBER, &i, -1);
 
-  tmp=g_strdup_printf("G%08docs_ecfw",hl->frame[i].idnum);
-  if(ow_check(hl, tmp)){
-    iraf_obj(hl, i, hl->frame[i].idnum);
+  if(hl->ql_line==16){
+    tmp=g_strdup_printf("G%08docs_ecfw_1d",hl->frame[i].idnum);
+    if(ow_check(hl, tmp)){
+      iraf_obj(hl, i, hl->frame[i].idnum);
+    }
+    else{
+      iraf_obj_splot(hl, i, tmp);
+    }
   }
   else{
-    iraf_obj_splot(hl, i, tmp);
+    tmp=g_strdup_printf("G%08docs_ecfw",hl->frame[i].idnum);
+    if(ow_check(hl, tmp)){
+      iraf_obj(hl, i, hl->frame[i].idnum);
+    }
+    else{
+      iraf_obj_splot(hl, i, tmp);
+    }
   }
   g_free(tmp);
 }
@@ -1273,7 +1321,7 @@ void make_obj_batch(typHLOG *hl, gchar *obj_in){
   gchar *tmp;
   gint i_sel;
 
-  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s %s %s %s %s %s %s %d %d %d %d %d;rm -rf %s\'",
+  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s %s %s %s %s %s %s %d %d %d %d %d %s %s %s;rm -rf %s\'",
 		      hl->ql_terminal,
 		      hl->ql_lock,
 		      hl->wdir,
@@ -1292,6 +1340,9 @@ void make_obj_batch(typHLOG *hl, gchar *obj_in){
 		      hl->ql_ge_line,
 		      hl->ql_ge_stx,
 		      hl->ql_ge_edx,
+		      (hl->ql_line==16) ? "yes" : "no",
+		      hl->ql_blaze,
+		      hl->ql_mask,
 		      hl->ql_lock);
 
   hl->ql_loop=QL_OBJECT_BATCH;

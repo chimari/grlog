@@ -2533,7 +2533,7 @@ GtkWidget *make_menu(typHLOG *hl){
 
 void gui_init(typHLOG *hl){
   gchar *tmp;
-  GtkWidget *menubar, *label, *table;
+  GtkWidget *menubar, *label, *table, *check;
   GtkWidget *hbox, *hbox1, *hbox2, *button, *frame, *frame1, *combo, *spinner;
   GtkAdjustment *adj;
 
@@ -2611,6 +2611,14 @@ void gui_init(typHLOG *hl){
       if(hl->ql_line==i_ord) iter_set=iter;
     }
     
+    tmp=g_strdup_printf("Make 1D");
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 
+		       0, tmp,
+		       1, 16, -1);
+    g_free(tmp);
+    if(hl->ql_line == 16) iter_set=iter;
+
     combo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
     gtkut_table_attach(table, combo, 1, 2, 1, 2,
 		       GTK_FILL,GTK_SHRINK,0,0);
@@ -2625,7 +2633,6 @@ void gui_init(typHLOG *hl){
     g_signal_connect (combo,"changed",G_CALLBACK(cc_get_combo_box),
 		      &hl->ql_line);
   }
- 
  
   frame1 = gtkut_frame_new ("Calibration");
   gtkut_table_attach(table, frame1, 4, 5, 0, 2,
@@ -2685,7 +2692,7 @@ void gui_init(typHLOG *hl){
       g_free(tmp);
       if(hl->ql_ge_line ==i_ord) iter_set=iter;
     }
-    
+       
     combo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
     gtkut_table_attach(table, combo, 0, 1, 1, 2,
 		       GTK_FILL,GTK_SHRINK,0,0);
@@ -3236,11 +3243,16 @@ void get_option(int argc, char **argv, typHLOG *hl)
 	else{
 	  hl->wdir=g_strdup(argv[i_opt]);
 	}
+	if(access(hl->wdir, F_OK)!=0){
+	  fprintf(stderr, "Making the database directory \"%s\" ...\n", hl->wdir);
+	  mkdir(hl->wdir, (S_IRWXU|S_IRWXG|S_IRWXO));
+	}
 	dbase=g_strconcat(hl->wdir,
 			  G_DIR_SEPARATOR_S,
 			  "database",
 			  NULL);
 	if(access(dbase, F_OK)!=0){
+	  fprintf(stderr, "Making the database directory \"%s\" ...\n", dbase);
 	  mkdir(dbase, (S_IRWXU|S_IRWXG|S_IRWXO));
 	}
 	g_free(dbase);
@@ -3369,6 +3381,8 @@ int main(int argc, char* argv[]){
   hl->ql_thar2d=g_strdup(GAOES_THAR2D);
   hl->ql_flat=g_strdup(GAOES_FLAT);
   hl->ql_ap=g_strdup(GAOES_AP);
+  hl->ql_mask=g_strdup(GAOES_MASK);
+  hl->ql_blaze=g_strdup(GAOES_BLAZE);
   hl->ql_thar_new=NULL;
   hl->ql_flat_new=NULL;
   hl->ql_ap_new=NULL;

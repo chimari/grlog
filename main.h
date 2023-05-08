@@ -58,6 +58,8 @@
 #define GAOES_FLAT "Flat.GAOES-RV.fc.sc.nm"
 #define GAOES_THAR1D "ThAr.GAOES-RV.fc.center"
 #define GAOES_THAR2D "ThAr.GAOES-RV.fc"
+#define GAOES_MASK "Mask.GAOES-RV.ocs_ecfw"
+#define GAOES_BLAZE "cBlaze.GAOES-RV"
 #define GAOES_PY_GRQL "grql.py"
 #define GAOES_PY_GRQL_BATCH "grql_batch.py"
 #define GAOES_PY_FLAT "gaoes_flat.py"
@@ -510,9 +512,13 @@ struct _typHLOG{
   gchar *ql_thar2d;
   gchar *ql_flat;
   gchar *ql_ap;
+  gchar *ql_mask;
+  gchar *ql_blaze;
   gchar *ql_thar_new;
   gchar *ql_flat_new;
   gchar *ql_ap_new;
+  gchar *ql_mask_new;
+  gchar *ql_blaze_new;
   gint *ql_st_x;
   gint *ql_ed_x;
 
