@@ -54,17 +54,19 @@
 #define XGTERM_COM "/usr/local/bin/xgterm -sb -sl 2000 -title %s -e \"cd ~;/usr/local/bin/cl\" &"
 
 #define SHARE_DIR "IRAF/GAOES-RV_ql"
-#define GAOES_AP "Ap.GAOES-RV.fc"
-#define GAOES_FLAT "Flat.GAOES-RV.fc.sc.nm"
-#define GAOES_THAR1D "ThAr.GAOES-RV.fc.center"
-#define GAOES_THAR2D "ThAr.GAOES-RV.fc"
+#define GAOES_AP "Ap.GAOES-RV.f8"
+#define GAOES_FLAT "Flat.GAOES-RV.f8.sc.nm"
+#define GAOES_THAR1D "ThAr.GAOES-RV.f8.center"
+#define GAOES_THAR2D "ThAr.GAOES-RV.f8"
 #define GAOES_MASK "Mask.GAOES-RV.ocs_ecfw"
-#define GAOES_BLAZE "cBlaze.GAOES-RV"
+#define GAOES_BLAZE "cBlaze.GAOES-RV.f8"
 #define GAOES_PY_GRQL "grql.py"
 #define GAOES_PY_GRQL_BATCH "grql_batch.py"
 #define GAOES_PY_FLAT "gaoes_flat.py"
 #define GAOES_PY_COMP "gaoes_comp.py"
 #define GAOES_PY_SPLOT "splot.py"
+#define GAOES_PY_MASK "gaoes_mkmask.py"
+#define GAOES_PY_BLAZE "gaoes_mkblaze.py"
 
 #define GAOES_ST_X (-54)
 #define GAOES_ED_X 53
@@ -72,7 +74,7 @@
 #define QL_PYTHON "python3"
 #define QL_TERMINAL "xterm -geometry 85x10 -e"
 
-enum{QL_THAR, QL_FLAT, QL_OBJECT, QL_OBJECT_BATCH, QL_SPLOT, NUM_QL};
+enum{QL_THAR, QL_FLAT, QL_OBJECT, QL_OBJECT_BATCH, QL_SPLOT, QL_MASK, QL_BLAZE, NUM_QL};
 
 
 #define FLAT_IN "flat.in"
@@ -91,7 +93,7 @@ enum{CAL_AP, CAL_FLAT, CAL_THAR, NUM_CAL};
 
 enum{FLAT_OW_NONE, FLAT_OW_SKIP, FLAT_OW_GO,  FLAT_OW_ABORT};
 
-enum{OPEN_AP, OPEN_FLAT, OPEN_THAR, 
+enum{OPEN_AP, OPEN_FLAT, OPEN_THAR, OPEN_MASK, OPEN_BLAZE,
      OPEN_LOG, SAVE_LOG, NUM_OPEN};
 
 enum{DISP_ALL, DISP_NORMAL, DISP_I2, DISP_OBJECT, DISP_FLAT, DISP_COMP,
@@ -558,6 +560,8 @@ struct _typHLOG{
   GtkWidget *label_edit_ap;
   GtkWidget *label_edit_flat;
   GtkWidget *label_edit_thar;
+  GtkWidget *label_edit_mask;
+  GtkWidget *label_edit_blaze;
 
   GtkWidget *entry_ap_id;
   GtkWidget *entry_thar_reid;

@@ -28,6 +28,12 @@ gboolean check_ql(gpointer gdata){
       break;
     case QL_SPLOT:
       break;
+    case QL_MASK:
+      finish_mask(hl);
+      break;
+    case QL_BLAZE:
+      finish_blaze(hl);
+      break;
     }
     
     hl->ql_timer=-1;
@@ -262,6 +268,37 @@ void set_thar_label(typHLOG *hl){
   gtk_label_set_markup(GTK_LABEL(hl->label_edit_thar), tmp);
   g_free(tmp);
 }
+
+void set_mask_label(typHLOG *hl){
+  gchar *tmp;
+
+  if(hl->ql_mask){
+    tmp=g_strdup_printf("<span font_family=\"monospace\">%s.fits</span>",
+			hl->ql_mask);
+  }
+  else{
+    tmp=g_strdup("<span color=\"#999999\"><i>(Not set)</i></span>");
+  }
+
+  gtk_label_set_markup(GTK_LABEL(hl->label_edit_mask), tmp);
+  g_free(tmp);
+}
+
+void set_blaze_label(typHLOG *hl){
+  gchar *tmp;
+
+  if(hl->ql_blaze){
+    tmp=g_strdup_printf("<span font_family=\"monospace\">%s.fits</span>",
+			hl->ql_blaze);
+  }
+  else{
+    tmp=g_strdup("<span color=\"#999999\"><i>(Not set)</i></span>");
+  }
+
+  gtk_label_set_markup(GTK_LABEL(hl->label_edit_blaze), tmp);
+  g_free(tmp);
+}
+
 
 gchar *get_refname(gchar *fp_file){
   gchar *bname=NULL, *ret, *c;
@@ -592,6 +629,38 @@ void prepare_pyraf(typHLOG *hl){
   }
   g_free(dest);
 		      
+  // gaoes_mkmask.py
+  dest=g_strconcat(hl->wdir,
+		   G_DIR_SEPARATOR_S,
+		   GAOES_PY_MASK,
+		   NULL);
+  if(access(dest, F_OK)!=0){
+    src=g_strconcat(hl->sdir,
+		    G_DIR_SEPARATOR_S,
+		    GAOES_PY_MASK,
+		    NULL);
+    copy_file(src, dest);
+    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
+    g_free(src);
+  }
+  g_free(dest);
+		      
+  // gaoes_mkblaze.py
+  dest=g_strconcat(hl->wdir,
+		   G_DIR_SEPARATOR_S,
+		   GAOES_PY_BLAZE,
+		   NULL);
+  if(access(dest, F_OK)!=0){
+    src=g_strconcat(hl->sdir,
+		    G_DIR_SEPARATOR_S,
+		    GAOES_PY_BLAZE,
+		    NULL);
+    copy_file(src, dest);
+    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
+    g_free(src);
+  }
+  g_free(dest);
+
   // splot.py
   dest=g_strconcat(hl->wdir,
 		   G_DIR_SEPARATOR_S,
@@ -1448,7 +1517,7 @@ void iraf_flat(typHLOG *hl, gint i_sel, gint i_file, gchar *flat_in){
 
 
 void finish_flat(typHLOG *hl){
-  gchar *tmp;
+  gchar *tmp, *tmp_ap, *tmp_flat;
 
   tmp=g_strconcat(hl->wdir,
 		  G_DIR_SEPARATOR_S,
@@ -1463,6 +1532,21 @@ void finish_flat(typHLOG *hl){
 		    NULL);
     if(hl->ql_flat) g_free(hl->ql_flat);
     hl->ql_flat=g_strdup(tmp);
+    
+    tmp_flat=g_strdup_printf(" <b>New Flat</b> : %s", hl->ql_flat);
+    
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-information", 
+#else
+		  GTK_STOCK_DIALOG_INFO,
+#endif
+		  -1,
+		  "A new Flat frame has been successfully created and set for QL.",
+		  " ",
+		  tmp_flat,
+		  NULL);
+    g_free(tmp_flat);
   }
   else{
     popup_message(hl->w_top, 
@@ -1489,6 +1573,21 @@ void finish_flat(typHLOG *hl){
   if(access(tmp, F_OK)==0){
     if(hl->ql_ap) g_free(hl->ql_ap);
     hl->ql_ap=g_strdup(hl->ql_ap_new);
+
+    tmp_ap=g_strdup_printf(" <b>New Aperture</b> : %s", hl->ql_ap);
+    
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-information", 
+#else
+		  GTK_STOCK_DIALOG_INFO,
+#endif
+		  -1,
+		  "A new Aperture reference has been successfully created and set for QL.",
+		  " ",
+		  tmp_ap,
+		  NULL);
+    g_free(tmp_ap);
   }
   else{
     popup_message(hl->w_top, 
@@ -1616,6 +1715,7 @@ void ql_flat_red(GtkWidget *w, gpointer gdata){
 
 void finish_thar(typHLOG *hl){
   gchar *tmp;
+  gchar *tmp_1d, *tmp_2d;
   
   tmp=g_strconcat(hl->wdir,
 		  G_DIR_SEPARATOR_S,
@@ -1628,6 +1728,24 @@ void finish_thar(typHLOG *hl){
     hl->ql_thar2d=g_strdup(hl->ql_thar_new);
     if(hl->ql_thar1d) g_free(hl->ql_thar1d);
     hl->ql_thar1d=g_strdup_printf("%s.center",hl->ql_thar_new);
+
+    tmp_2d=g_strdup_printf(" <b>New 2D Comparison</b> : %s", hl->ql_thar2d);
+    tmp_1d=g_strdup_printf(" <b>New 1D Comparison</b> : %s", hl->ql_thar1d);
+    
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-information", 
+#else
+		  GTK_STOCK_DIALOG_INFO,
+#endif
+		  -1,
+		  "New Comarison frames have been successfully created and set for QL.",
+		  " ",
+		  tmp_2d,
+		  tmp_1d,
+		  NULL);
+    g_free(tmp_2d);
+    g_free(tmp_1d);
   }
   else{
     popup_message(hl->w_top, 
@@ -1646,6 +1764,93 @@ void finish_thar(typHLOG *hl){
 
 void finish_obj(typHLOG *hl){
 }
+
+void finish_mask(typHLOG *hl){
+  gchar *tmp, *tmp_mask;
+  
+  tmp=g_strconcat(hl->wdir,
+		  G_DIR_SEPARATOR_S,
+		  hl->ql_mask_new,
+		  ".fits",
+		  NULL);
+
+  if(access(tmp, F_OK)==0){
+    if(hl->ql_mask) g_free(hl->ql_mask);
+    hl->ql_mask=g_strdup(hl->ql_mask_new);
+
+    tmp_mask=g_strdup_printf(" <b>New Mask</b> : %s", hl->ql_mask);
+    
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-information", 
+#else
+		  GTK_STOCK_DIALOG_INFO,
+#endif
+		  -1,
+		  "A new Mask image has been successfully created and set for QL.",
+		  " ",
+		  tmp_mask,
+		  NULL);
+    g_free(tmp_mask);
+  }
+  else{
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-error", 
+#else
+		  GTK_STOCK_DIALOG_ERROR,
+#endif
+		  -1,
+		  tmp,
+		  " ",
+		  "Failed to create a new Mask image.",
+		  NULL);
+  }    
+}
+
+void finish_blaze(typHLOG *hl){
+  gchar *tmp, *tmp_blaze;
+  
+  tmp=g_strconcat(hl->wdir,
+		  G_DIR_SEPARATOR_S,
+		  hl->ql_blaze_new,
+		  ".fits",
+		  NULL);
+
+  if(access(tmp, F_OK)==0){
+    if(hl->ql_blaze) g_free(hl->ql_blaze);
+    hl->ql_blaze=g_strdup(hl->ql_blaze_new);
+
+    tmp_blaze=g_strdup_printf(" <b>New Blaze function</b> : %s", hl->ql_blaze);
+    
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-information", 
+#else
+		  GTK_STOCK_DIALOG_INFO,
+#endif
+		  -1,
+		  "A new Blaze function has been successfully created and set for QL.",
+		  " ",
+		  tmp_blaze,
+		  NULL);
+    g_free(tmp_blaze);
+  }
+  else{
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-error", 
+#else
+		  GTK_STOCK_DIALOG_ERROR,
+#endif
+		  -1,
+		  tmp,
+		  " ",
+		  "Failed to create a new Blaze function.",
+		  NULL);
+  }    
+}
+
 
 void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
   gchar *tmp; 
@@ -1691,6 +1896,126 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
 }
 
 
+void iraf_mask(typHLOG *hl, gint i_sel, gint i_file){
+  gchar *tmp, *tmp2; 
+
+  tmp=g_strdup_printf("%s%sG%08docs_ecfw.fits",
+		      hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      hl->frame[i_sel].idnum);
+  
+  if(access(tmp,F_OK)!=0){
+    tmp2=g_strdup_printf("    <b>%s</b>",tmp);
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "Cannot access to a reduced spectrum,",
+		  tmp2,
+		  " ",
+		  "Please reduce the data at once before creating a Mask image.",
+		  NULL);
+    g_free(tmp2);
+    g_free(tmp);
+    return;
+  }
+  g_free(tmp);
+
+  if(hl->ql_mask_new) g_free(hl->ql_mask_new);
+  hl->ql_mask_new=g_strdup_printf("Mask.%08d", hl->frame[i_sel].idnum);
+
+  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s G%08docs_ecfw %s;rm -rf %s\'",
+		      hl->ql_terminal,
+		      hl->ql_lock,
+		      hl->wdir,
+		      hl->ql_python,
+		      hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      GAOES_PY_MASK,
+		      hl->frame[i_sel].idnum,
+		      hl->ql_mask_new,
+		      hl->ql_lock);
+
+  hl->ql_loop=QL_MASK;
+  hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
+			     (gpointer)hl);
+  ext_play(tmp);
+  
+  g_free(tmp);
+
+}
+
+
+void iraf_blaze(typHLOG *hl, gint i_sel, gint i_file){
+  gchar *tmp, *tmp2; 
+
+  if(strcmp(hl->frame[i_sel].type,"FLAT")!=0){
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "The selected frame is not \"<b>FLAT</b>\".",
+		  NULL);
+    return;
+  }
+  
+  tmp=g_strdup_printf("%s%sG%08docs_ecfw.fits",
+		      hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      hl->frame[i_sel].idnum);
+  
+  if(access(tmp,F_OK)!=0){
+    tmp2=g_strdup_printf("    <b>%s</b>",tmp);
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "Cannot access to a reduced spectrum,",
+		  tmp2,
+		  " ",
+		  "Please reduce the data at once before creating a Blaze function.",
+		  NULL);
+    g_free(tmp2);
+    g_free(tmp);
+    return;
+  }
+  g_free(tmp);
+
+  if(hl->ql_blaze_new) g_free(hl->ql_blaze_new);
+  hl->ql_blaze_new=g_strdup_printf("cBlaze.%08d", hl->frame[i_sel].idnum);
+
+  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s G%08docs_ecfw %s %s;rm -rf %s\'",
+		      hl->ql_terminal,
+		      hl->ql_lock,
+		      hl->wdir,
+		      hl->ql_python,
+		      hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      GAOES_PY_BLAZE,
+		      hl->frame[i_sel].idnum,
+		      hl->ql_blaze_new,
+		      hl->ql_mask,
+		      hl->ql_lock);
+
+  hl->ql_loop=QL_BLAZE;
+  hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
+			     (gpointer)hl);
+  ext_play(tmp);
+  
+  g_free(tmp);
+
+}
+
+
 void ql_thar_foreach (GtkTreeModel *model, GtkTreePath *path, 
 		    GtkTreeIter *iter, gpointer gdata)
 {
@@ -1701,6 +2026,31 @@ void ql_thar_foreach (GtkTreeModel *model, GtkTreePath *path,
   gtk_tree_model_get (model, iter, COLUMN_FRAME_NUMBER, &i, -1);
 
   iraf_thar(hl, i, i_file);
+}
+
+void ql_mask_foreach (GtkTreeModel *model, GtkTreePath *path, 
+		    GtkTreeIter *iter, gpointer gdata)
+{
+  typHLOG *hl=(typHLOG *)gdata;
+  gint i, i_file;
+  gchar *c;
+    
+  gtk_tree_model_get (model, iter, COLUMN_FRAME_NUMBER, &i, -1);
+
+  iraf_mask(hl, i, i_file);
+}
+
+
+void ql_blaze_foreach (GtkTreeModel *model, GtkTreePath *path, 
+		    GtkTreeIter *iter, gpointer gdata)
+{
+  typHLOG *hl=(typHLOG *)gdata;
+  gint i, i_file;
+  gchar *c;
+    
+  gtk_tree_model_get (model, iter, COLUMN_FRAME_NUMBER, &i, -1);
+
+  iraf_blaze(hl, i, i_file);
 }
 
 
@@ -1753,6 +2103,105 @@ void ql_thar_red(GtkWidget *w, gpointer gdata){
 			   tmp_scr);
 }
 
+void ql_mask(GtkWidget *w, gpointer gdata){
+  typHLOG *hl=(typHLOG *)gdata;
+  gchar *tmp;
+  gchar *cmdline;
+  GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(hl->frame_tree));
+  GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(hl->frame_tree));
+  gint i_rows;
+  gint tmp_scr=hl->scr_flag;
+
+  if(hl->ql_timer>0){
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "Another reduction process is still running.",
+		  " ",
+		  "Please close it before creating a new reduction session.",
+		  NULL);
+    return;
+  }    
+
+  i_rows=gtk_tree_selection_count_selected_rows (selection);
+
+  if(i_rows==1){
+    gtk_tree_selection_selected_foreach (selection, ql_mask_foreach, (gpointer)hl);
+  }
+  else{
+    tmp=g_strdup_printf("<b>%d</b> rows are selected in the table.", 
+			i_rows);
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  tmp,
+		  " ",
+		  "Please select only one row to make a new Mask image.",
+		  NULL);
+  }
+
+  gtk_combo_box_set_active(GTK_COMBO_BOX(hl->scr_combo),
+			   tmp_scr);
+}
+
+
+void ql_blaze(GtkWidget *w, gpointer gdata){
+  typHLOG *hl=(typHLOG *)gdata;
+  gchar *tmp;
+  gchar *cmdline;
+  GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(hl->frame_tree));
+  GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(hl->frame_tree));
+  gint i_rows;
+  gint tmp_scr=hl->scr_flag;
+
+  if(hl->ql_timer>0){
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "Another reduction process is still running.",
+		  " ",
+		  "Please close it before creating a new reduction session.",
+		  NULL);
+    return;
+  }    
+
+  i_rows=gtk_tree_selection_count_selected_rows (selection);
+
+  if(i_rows==1){
+    gtk_tree_selection_selected_foreach (selection, ql_blaze_foreach, (gpointer)hl);
+  }
+  else{
+    tmp=g_strdup_printf("<b>%d</b> rows are selected in the table.", 
+			i_rows);
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  tmp,
+		  " ",
+		  "Please select only one row to make a new Blaze function.",
+		  NULL);
+  }
+
+  gtk_combo_box_set_active(GTK_COMBO_BOX(hl->scr_combo),
+			   tmp_scr);
+}
+
 
 
 ////////////// Find ///////////////////
@@ -1767,10 +2216,11 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
   switch(mode){
   case OPEN_AP:
     tmp=g_strdup("GAOES-RV Log Editor : Select an Aperture File");
-    if(hl->ap_red[hl->iraf_hdsql_r]){
+    //if(hl->ap_red[hl->iraf_hdsql_r]){
+    if(hl->ql_ap){
       fp_file=g_strconcat(hl->wdir,
 			  G_DIR_SEPARATOR_S,
-			  hl->ap_red[hl->iraf_hdsql_r],
+			  hl->ql_ap,
 			  ".fits",
 			  NULL);
     }
@@ -1778,10 +2228,11 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
 
   case OPEN_FLAT:
     tmp=g_strdup("GAOES-RV Log Editor : Select a Flat Image File");
-    if(hl->flat_red[hl->iraf_hdsql_r]){
+    //if(hl->flat_red[hl->iraf_hdsql_r]){
+    if(hl->ql_flat){
       fp_file=g_strconcat(hl->wdir,
 			  G_DIR_SEPARATOR_S,
-			  hl->flat_red[hl->iraf_hdsql_r],
+			  hl->ql_flat,
 			  ".fits",
 			  NULL);
     }
@@ -1789,10 +2240,33 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
 
   case OPEN_THAR:
     tmp=g_strdup("GAOES-RV Log Editor : Select a ThAr File");
-    if(hl->thar_red[hl->iraf_hdsql_r]){
+    //if(hl->thar_red[hl->iraf_hdsql_r]){
+    if(hl->ql_thar1d){
       fp_file=g_strconcat(hl->wdir,
 			  G_DIR_SEPARATOR_S,
-			  hl->thar_red[hl->iraf_hdsql_r],
+			  hl->ql_thar1d,
+			  ".fits",
+			  NULL);
+    }
+    break;
+
+  case OPEN_MASK:
+    tmp=g_strdup("GAOES-RV Log Editor : Select a Mask File");
+    if(hl->ql_mask){
+      fp_file=g_strconcat(hl->wdir,
+			  G_DIR_SEPARATOR_S,
+			  hl->ql_mask,
+			  ".fits",
+			  NULL);
+    }
+    break;
+
+  case OPEN_BLAZE:
+    tmp=g_strdup("GAOES-RV Log Editor : Select a Blaze Function File");
+    if(hl->ql_blaze){
+      fp_file=g_strconcat(hl->wdir,
+			  G_DIR_SEPARATOR_S,
+			  hl->ql_blaze,
 			  ".fits",
 			  NULL);
     }
@@ -1873,6 +2347,16 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
     case OPEN_THAR:
       my_file_chooser_add_filter(fdialog,"1D Wavelength Reference File",
 				 "ThAr.*.center.fits",NULL);
+      break;
+      
+    case OPEN_MASK:
+      my_file_chooser_add_filter(fdialog,"Mask File",
+				 "Mask.*.fits",NULL);
+      break;
+      
+    case OPEN_BLAZE:
+      my_file_chooser_add_filter(fdialog,"Blaze Function File",
+				 "cBlaze.*.fits",NULL);
       break;
       
     case OPEN_LOG:
@@ -1979,6 +2463,18 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
 	g_free(db_file);
 	break;
 
+      case OPEN_MASK:
+	if(hl->ql_mask) g_free(hl->ql_mask);
+	hl->ql_mask=get_refname(*tgt_file);
+	set_mask_label(hl);
+	break;
+
+      case OPEN_BLAZE:
+	if(hl->ql_blaze) g_free(hl->ql_blaze);
+	hl->ql_blaze=get_refname(*tgt_file);
+	set_blaze_label(hl);
+	break;
+
       case OPEN_LOG:
 	{
 	  FILE *fp;
@@ -2060,6 +2556,20 @@ void edit_thar (GtkWidget *widget, gpointer gdata)
   typHLOG *hl=(typHLOG *)gdata;
 
   grlog_OpenFile(hl, OPEN_THAR);
+}
+
+void edit_mask (GtkWidget *widget, gpointer gdata)
+{
+  typHLOG *hl=(typHLOG *)gdata;
+
+  grlog_OpenFile(hl, OPEN_MASK);
+}
+
+void edit_blaze (GtkWidget *widget, gpointer gdata)
+{
+  typHLOG *hl=(typHLOG *)gdata;
+
+  grlog_OpenFile(hl, OPEN_BLAZE);
 }
 
 void edit_cal(GtkWidget *w, gpointer gdata){
@@ -2182,6 +2692,76 @@ void edit_cal(GtkWidget *w, gpointer gdata){
   gtk_box_pack_start(GTK_BOX(hbox),button,FALSE, FALSE, 0);
   g_signal_connect (button, "clicked",
   		    G_CALLBACK (edit_thar), (gpointer)hl);
+
+  
+  //// Mask
+  frame = gtkut_frame_new ("<b> Mask</b>");
+  gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
+		     frame,FALSE, FALSE, 0);
+  gtk_container_set_border_width (GTK_CONTAINER (frame), 5);
+
+  vbox = gtkut_vbox_new(FALSE,2);
+  gtk_container_set_border_width (GTK_CONTAINER (vbox), 5);
+  gtk_container_add (GTK_CONTAINER (frame), vbox);
+
+  hbox = gtkut_hbox_new(FALSE,2);
+  gtk_container_set_border_width (GTK_CONTAINER (hbox), 5);
+  gtk_box_pack_start(GTK_BOX(vbox), hbox,FALSE, FALSE, 5);
+
+  hl->label_edit_mask=gtkut_label_new("Mask");
+  set_mask_label(hl);
+
+#ifdef USE_GTK3
+  gtk_widget_set_halign (hl->label_edit_mask, GTK_ALIGN_START);
+  gtk_widget_set_valign (hl->label_edit_mask, GTK_ALIGN_CENTER);
+#else
+  gtk_misc_set_alignment (GTK_MISC (hl->label_edit_mask), 0.0, 0.5);
+#endif
+  gtk_box_pack_start(GTK_BOX(hbox), hl->label_edit_mask, FALSE, FALSE, 5);
+
+#ifdef USE_GTK3
+  button=gtkut_button_new_from_icon_name(NULL,"document-open");
+#else
+  button=gtkut_button_new_from_stock(NULL, GTK_STOCK_FIND);
+#endif
+  gtk_box_pack_start(GTK_BOX(hbox),button,FALSE, FALSE, 0);
+  g_signal_connect (button, "clicked",
+  		    G_CALLBACK (edit_mask), (gpointer)hl);
+
+
+  //// Blaze
+  frame = gtkut_frame_new ("<b> Blaze Function</b>");
+  gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
+		     frame,FALSE, FALSE, 0);
+  gtk_container_set_border_width (GTK_CONTAINER (frame), 5);
+
+  vbox = gtkut_vbox_new(FALSE,2);
+  gtk_container_set_border_width (GTK_CONTAINER (vbox), 5);
+  gtk_container_add (GTK_CONTAINER (frame), vbox);
+
+  hbox = gtkut_hbox_new(FALSE,2);
+  gtk_container_set_border_width (GTK_CONTAINER (hbox), 5);
+  gtk_box_pack_start(GTK_BOX(vbox), hbox,FALSE, FALSE, 5);
+
+  hl->label_edit_blaze=gtkut_label_new("Blaze Function");
+  set_blaze_label(hl);
+
+#ifdef USE_GTK3
+  gtk_widget_set_halign (hl->label_edit_blaze, GTK_ALIGN_START);
+  gtk_widget_set_valign (hl->label_edit_blaze, GTK_ALIGN_CENTER);
+#else
+  gtk_misc_set_alignment (GTK_MISC (hl->label_edit_blaze), 0.0, 0.5);
+#endif
+  gtk_box_pack_start(GTK_BOX(hbox), hl->label_edit_blaze, FALSE, FALSE, 5);
+
+#ifdef USE_GTK3
+  button=gtkut_button_new_from_icon_name(NULL,"document-open");
+#else
+  button=gtkut_button_new_from_stock(NULL, GTK_STOCK_FIND);
+#endif
+  gtk_box_pack_start(GTK_BOX(hbox),button,FALSE, FALSE, 0);
+  g_signal_connect (button, "clicked",
+  		    G_CALLBACK (edit_blaze), (gpointer)hl);
 
 
   gtk_widget_show_all(dialog);

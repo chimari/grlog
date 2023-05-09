@@ -2653,6 +2653,16 @@ void gui_init(typHLOG *hl){
   g_signal_connect (hl->button_thar_red, "clicked",
 		    G_CALLBACK (ql_thar_red), (gpointer)hl);
 
+  button=gtk_button_new_with_label("Mask");
+  gtk_box_pack_start(GTK_BOX(hbox2),button,FALSE, FALSE, 0);
+  g_signal_connect (button, "clicked",
+		    G_CALLBACK (ql_mask), (gpointer)hl);
+
+  button=gtk_button_new_with_label("Blaze");
+  gtk_box_pack_start(GTK_BOX(hbox2),button,FALSE, FALSE, 0);
+  g_signal_connect (button, "clicked",
+		    G_CALLBACK (ql_blaze), (gpointer)hl);
+
 #ifdef USE_GTK3
   button=gtkut_button_new_from_icon_name(NULL,"preferences-system");
 #else

@@ -21,6 +21,8 @@ void ql_obj_red();
 void ql_ap_red();
 void ql_flat_red();
 void ql_thar_red();
+void ql_mask();
+void ql_blaze();
 void ql_find_red();
 void ql_param_red();
 
