@@ -68,19 +68,27 @@ gboolean upd0;
 void check_reduced_spectra(typHLOG *hl){
   gint i;
   gchar *tmp;
+  gboolean refresh=FALSE;
 
   for(i=0;i<hl->num;i++){
-    tmp=g_strdup_printf("%s%sG%08docs_ecfw.fits",
-			hl->wdir,
-			G_DIR_SEPARATOR_S,
-			hl->frame[i].idnum);
-    if(access(tmp,F_OK)==0){
-      hl->frame[i].qlr=TRUE;
+    refresh=FALSE;
+    if(!hl->frame[i].qlr){
+      tmp=g_strdup_printf("%s%sG%08docs_ecfw_1d.fits",
+			  hl->wdir,
+			  G_DIR_SEPARATOR_S,
+			  hl->frame[i].idnum);
+      if(access(tmp,F_OK)==0){
+	hl->frame[i].qlr=TRUE;
+	refresh=TRUE;
+      }
+      else{
+	hl->frame[i].qlr=FALSE;
+      }
+      if(refresh){
+	hl->frame[i].note.cnt=get_cnt(hl, i);
+	frame_tree_update_ql(hl, i);
+      }
     }
-    else{
-      hl->frame[i].qlr=FALSE;
-    }
-    hl->frame[i].note.cnt=get_cnt(hl, i);
   }
 }
 
@@ -505,7 +513,6 @@ void refresh_table (GtkWidget *widget, gpointer gdata)
 
   for(i=0;i<MAX_FRAME;i++){
     init_frame(&hl->frame[i]);
-    //hl->frame[i].note.txt=NULL;
   }
   if(hl->last_frame_id) g_free(hl->last_frame_id);
   hl->last_frame_id=g_strdup("New");
@@ -815,6 +822,16 @@ void make_top_table(typHLOG *hl){
     g_signal_connect (hl->scr_combo,"changed",G_CALLBACK(cc_get_combo_box),
 		       &hl->scr_flag);
   }
+
+#ifdef USE_GTK3
+  button=gtkut_button_new_from_icon_name(NULL,"view-refresh");
+#else
+  button=gtkut_button_new_from_stock(NULL,GTK_STOCK_REFRESH);
+#endif
+  gtk_box_pack_start(GTK_BOX(hbox),button,FALSE,FALSE,0);
+  g_signal_connect(button,"clicked", 
+		   G_CALLBACK(refresh_table), 
+		   (gpointer)hl);
 
   hbox = gtkut_hbox_new(FALSE,2);
   gtk_container_set_border_width (GTK_CONTAINER (hbox), 5);
@@ -2237,17 +2254,17 @@ gint printdir(typHLOG *hl){
   int i,n;
   GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(hl->frame_tree));
 
-  if((dp = opendir(hl->data_dir)) == NULL){
-    fprintf(stderr, "cannot open directory: %s\n",hl->data_dir);
+  if((dp = opendir(hl->ddir)) == NULL){
+    fprintf(stderr, "cannot open directory: %s\n",hl->ddir);
     return (-1);
   }
 #ifdef DEBUG
   else{
-    fprintf(stderr, "Reading: %s\n",hl->data_dir);
+    fprintf(stderr, "Reading: %s\n",hl->ddir);
   }
 #endif
   
-  chdir(hl->data_dir);
+  chdir(hl->ddir);
   
   while((entry=readdir(dp))!=NULL){
     stat(entry->d_name,&statbuf);
@@ -2300,7 +2317,7 @@ gint printdir(typHLOG *hl){
   hl->seek_time=time(NULL);
   
 #ifdef DEBUG
-  fprintf(stderr, "End of Read: %s\n",hl->data_dir);
+  fprintf(stderr, "End of Read: %s\n",hl->ddir);
 #endif
 
   return (0);
@@ -3337,10 +3354,10 @@ int main(int argc, char* argv[]){
 
 
   if(argdir[strlen(argdir)-1]=='/'){
-    hl->data_dir=g_strndup(argdir,strlen(argdir)-1);
+    hl->ddir=g_strndup(argdir,strlen(argdir)-1);
   }
   else{
-    hl->data_dir=g_strdup(argdir);
+    hl->ddir=g_strdup(argdir);
   }
   g_free(argdir);
   hl->num=0;
@@ -3428,7 +3445,6 @@ int main(int argc, char* argv[]){
     unlink(hl->ql_lock);
   }
   hl->ql_timer=-1;
-  hl->ddir=g_strdup(hl->data_dir);
   if(!hl->wdir) hl->wdir=get_work_dir(hl);
   if(!hl->sdir) hl->sdir=get_share_dir(hl);
   

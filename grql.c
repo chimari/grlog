@@ -8,6 +8,11 @@ gboolean check_ql(gpointer gdata){
   typHLOG *hl=(typHLOG *)gdata;
 
   if(access(hl->ql_lock,F_OK)==0){
+    switch(hl->ql_loop){
+    case QL_OBJECT_BATCH:
+      check_reduced_spectra(hl);
+      break;
+    }
     return(TRUE);
   }
   else{
@@ -1419,6 +1424,7 @@ void make_obj_batch(typHLOG *hl, gchar *obj_in){
 		      hl->ql_mask,
 		      hl->ql_lock);
 
+  printf("%s\n",tmp);
   hl->ql_loop=QL_OBJECT_BATCH;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
 			     (gpointer)hl);
