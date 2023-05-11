@@ -2588,7 +2588,7 @@ void gui_init(typHLOG *hl){
 		    G_CALLBACK (ql_obj_red), (gpointer)hl);
 
 
-  label = gtk_label_new ("splot def.");
+  label = gtk_label_new ("splot");
   gtkut_table_attach(table, label, 1, 2, 0, 1,
 		     GTK_FILL,GTK_SHRINK,0,0);
 
@@ -2601,6 +2601,22 @@ void gui_init(typHLOG *hl){
 
     store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_INT);
 
+    tmp=g_strdup_printf("No Plot");
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 
+		       0, tmp,
+		       1, -1, -1);
+    g_free(tmp);
+    if(hl->ql_line == -1) iter_set=iter;
+    
+    tmp=g_strdup_printf("1D spec");
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 
+		       0, tmp,
+		       1, 0, -1);
+    g_free(tmp);
+    if(hl->ql_line == 0) iter_set=iter;
+
     for(i_ord=1;i_ord<=15;i_ord++){
       tmp=g_strdup_printf("order %d", i_ord);
       gtk_list_store_append(store, &iter);
@@ -2611,13 +2627,6 @@ void gui_init(typHLOG *hl){
       if(hl->ql_line==i_ord) iter_set=iter;
     }
     
-    tmp=g_strdup_printf("Make 1D");
-    gtk_list_store_append(store, &iter);
-    gtk_list_store_set(store, &iter, 
-		       0, tmp,
-		       1, 16, -1);
-    g_free(tmp);
-    if(hl->ql_line == 16) iter_set=iter;
 
     combo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
     gtkut_table_attach(table, combo, 1, 2, 1, 2,

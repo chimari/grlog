@@ -1270,7 +1270,7 @@ gint get_cnt(typHLOG *hl, gint i_file){
 void iraf_obj(typHLOG *hl, gint i_sel, gint i_file){
   gchar *tmp; 
 
-  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s \"%08d\" %s %s %s %s %s %d %d %d %d %d %s %s %s %d;rm -rf %s\'",
+  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s \"%08d\" %s %s %s %s %s %d %d %d %d %d %s %s %d;rm -rf %s\'",
 		      hl->ql_terminal,
 		      hl->ql_lock,
 		      hl->wdir,
@@ -1289,7 +1289,6 @@ void iraf_obj(typHLOG *hl, gint i_sel, gint i_file){
 		      hl->ql_ge_line,
 		      hl->ql_ge_stx,
 		      hl->ql_ge_edx,
-		      (hl->ql_line==16) ? "yes" : "no",
 		      hl->ql_blaze,
 		      hl->ql_mask,
 		      hl->ql_line,
@@ -1318,11 +1317,11 @@ void iraf_obj_splot(typHLOG *hl, gint i_sel, gchar *spec_file){
 		      spec_file,
 		      hl->ql_line,
 		      hl->ql_lock);
-  
+
   hl->ql_i=i_sel;
   hl->ql_loop=QL_SPLOT;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
-			     (gpointer)hl);
+  			     (gpointer)hl);
   ext_play(tmp);
   
   g_free(tmp);
@@ -1347,7 +1346,14 @@ void ql_obj_foreach (GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, 
     
   gtk_tree_model_get (model, iter, COLUMN_FRAME_NUMBER, &i, -1);
 
-  if(hl->ql_line==16){
+  
+  if(hl->ql_line<0){
+    tmp=g_strdup_printf("G%08docs_ecfw",hl->frame[i].idnum);
+    if(ow_check(hl, tmp)){
+      iraf_obj(hl, i, hl->frame[i].idnum);
+    }
+  }
+  else if(hl->ql_line==0){
     tmp=g_strdup_printf("G%08docs_ecfw_1d",hl->frame[i].idnum);
     if(ow_check(hl, tmp)){
       iraf_obj(hl, i, hl->frame[i].idnum);
@@ -1390,7 +1396,7 @@ void make_obj_batch(typHLOG *hl, gchar *obj_in){
   gchar *tmp;
   gint i_sel;
 
-  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s %s %s %s %s %s %s %d %d %d %d %d %s %s %s;rm -rf %s\'",
+  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s %s %s %s %s %s %s %d %d %d %d %d %s %s;rm -rf %s\'",
 		      hl->ql_terminal,
 		      hl->ql_lock,
 		      hl->wdir,
@@ -1409,7 +1415,6 @@ void make_obj_batch(typHLOG *hl, gchar *obj_in){
 		      hl->ql_ge_line,
 		      hl->ql_ge_stx,
 		      hl->ql_ge_edx,
-		      (hl->ql_line==16) ? "yes" : "no",
 		      hl->ql_blaze,
 		      hl->ql_mask,
 		      hl->ql_lock);
@@ -1478,6 +1483,8 @@ void ql_obj_red(GtkWidget *w, gpointer gdata){
     g_free(obj_in);
   }
 }
+
+
 
 
 
