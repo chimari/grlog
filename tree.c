@@ -199,6 +199,30 @@ static void frame_tree_add_columns (typHLOG *hl,
 					  NULL);
   gtk_tree_view_append_column(GTK_TREE_VIEW (treeview),column);
 
+  /* CAL column */
+  renderer = gtk_cell_renderer_text_new ();
+  g_object_set_data (G_OBJECT (renderer), "column", 
+		     GINT_TO_POINTER (COLUMN_FRAME_CAL));
+  
+  column = gtk_tree_view_column_new_with_attributes (NULL,
+						     renderer,
+						     "markup", 
+						     COLUMN_FRAME_CAL,
+#ifdef USE_GTK3
+						     "foreground-rgba", COLUMN_FRAME_COLFG,
+						     "background-rgba", COLUMN_FRAME_COLBG,
+#else
+						     "foreground-gdk", COLUMN_FRAME_COLFG,
+						     "background-gdk", COLUMN_FRAME_COLBG,
+#endif					   
+						     NULL);
+  gtkut_tree_view_column_set_markup(column, "CAL");
+  gtk_tree_view_column_set_cell_data_func(column, renderer,
+					  frame_tree_cell_data_func,
+					  GUINT_TO_POINTER(COLUMN_FRAME_CAL),
+					  NULL);
+  gtk_tree_view_append_column(GTK_TREE_VIEW (treeview),column);
+
   /* Prop-ID column */
   renderer = gtk_cell_renderer_text_new ();
   g_object_set_data (G_OBJECT (renderer), "column", 
@@ -496,7 +520,8 @@ frame_tree_create_items_model (typHLOG *hl)
 			      G_TYPE_STRING,   //COLUMN_FRAME_ID,
 			      G_TYPE_STRING,   //COLUMN_FRAME_NAME,
 			      G_TYPE_STRING,   //COLUMN_FRAME_TYPE,
-			      G_TYPE_BOOLEAN,  //COLUMN_FRAME_QLR,
+			      G_TYPE_INT,      //COLUMN_FRAME_QLR,
+			      G_TYPE_INT,      //COLUMN_FRAME_CAL,
 			      G_TYPE_STRING,   //COLUMN_FRAME_PROP,
 			      G_TYPE_STRING,   //COLUMN_FRAME_OBSERVER,
 			      G_TYPE_STRING,   //COLUMN_FRAME_DATE,
@@ -538,6 +563,7 @@ void frame_tree_update_item(typHLOG *hl,
 		      COLUMN_FRAME_NAME,   hl->frame[i_frm].name,
 		      COLUMN_FRAME_TYPE,   hl->frame[i_frm].type,
 		      COLUMN_FRAME_QLR,    hl->frame[i_frm].qlr,
+		      COLUMN_FRAME_CAL,    hl->frame[i_frm].cal,
 		      COLUMN_FRAME_PROP,   hl->frame[i_frm].prop,
 		      COLUMN_FRAME_OBSERVER, hl->frame[i_frm].observer,
 		      COLUMN_FRAME_DATE,   hl->frame[i_frm].date,
@@ -639,7 +665,7 @@ void qlr_cell_data_func(GtkTreeViewColumn *col ,
 			gpointer user_data)
 {
   gchar *str=NULL;
-  gboolean b_buf;
+  gint i_buf;
   gint i;
   typHLOG *hl=(typHLOG *) user_data;
   
@@ -649,19 +675,21 @@ void qlr_cell_data_func(GtkTreeViewColumn *col ,
   i++;
   
   gtk_tree_model_get (model, iter, 
-		      COLUMN_FRAME_QLR, &b_buf,
+		      COLUMN_FRAME_QLR, &i_buf,
 		      -1);
- 
-  if(b_buf){
-    if(i==hl->i_reduced){
-      str=g_strdup("&#x2605;"); // star
-    }
-    else{
-      str=g_strdup("&#x25CB;"); // o
-    }
-  }
-  else{
+
+  switch(i_buf){
+  case QLR_DONE:
+    str=g_strdup("&#x25CB;"); // o
+    break;
+    
+  case QLR_NOW:
+    str=g_strdup("&#x2605;"); // star
+    break;
+
+  default:
     str=g_strdup("&#x2015;");  // x
+    break;
   }
   
   g_object_set(renderer, "markup", str, NULL);
@@ -701,6 +729,7 @@ void frame_tree_cell_data_func(GtkTreeViewColumn *col ,
   case COLUMN_FRAME_NUMBER:
   case COLUMN_FRAME_EXPTIME:
   case COLUMN_FRAME_COUNT:
+  case COLUMN_FRAME_CAL:
     gtk_tree_model_get (model, iter, 
 			index, &i_buf,
 			-1);
@@ -715,7 +744,7 @@ void frame_tree_cell_data_func(GtkTreeViewColumn *col ,
 
   case COLUMN_FRAME_QLR:
     gtk_tree_model_get (model, iter, 
-			index, &b_buf,
+			index, &i_buf,
 			-1);
     break;
   }
@@ -755,12 +784,39 @@ void frame_tree_cell_data_func(GtkTreeViewColumn *col ,
     str=g_strdup_printf("%.4lf",d_buf);
     break;
 
-  case COLUMN_FRAME_QLR:
-    if(b_buf){
-      str=g_strdup("&#x25CB;");
+  case COLUMN_FRAME_CAL:
+    switch(i_buf){
+    case QLCAL_FLAT:
+      str=g_strdup("<b>F</b>");
+      break;
+    case QLCAL_FLAT0:
+      str=g_strdup("f");
+      break;
+    case QLCAL_COMP:
+      str=g_strdup("<b>C</b>");
+      break;
+    case QLCAL_COMP0:
+      str=g_strdup("c");
+      break;
+    default:
+      str=NULL;
+      break;
     }
-    else{
+    break;
+
+  case COLUMN_FRAME_QLR:
+    switch(i_buf){
+    case QLR_DONE:
+      str=g_strdup("&#x25CB;");
+      break;
+
+    case QLR_NOW:
+      str=g_strdup("&#x2605;");
+      break;
+
+    default:
       str=g_strdup("&#x2015;");
+      break;
     }
     break;
 
@@ -772,6 +828,7 @@ void frame_tree_cell_data_func(GtkTreeViewColumn *col ,
   switch (index) {
   case COLUMN_FRAME_QLR:
   case COLUMN_FRAME_COUNT:
+  case COLUMN_FRAME_CAL:
     g_object_set(renderer, "markup", str, NULL);
     break;
 
@@ -882,6 +939,24 @@ void frame_tree_update_ql (typHLOG *hl, gint i_sel){
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
 		       COLUMN_FRAME_COUNT, hl->frame[i_sel].note.cnt, -1);
   }
+}
+
+void frame_tree_update_cal (typHLOG *hl, gint i_sel){
+  GtkTreeModel *model 
+    = gtk_tree_view_get_model(GTK_TREE_VIEW(hl->frame_tree));
+  GtkTreeIter iter;
+  GtkTreePath *path;
+  gint i_frm;
+
+  path=gtk_tree_path_new_first();
+
+  for(i_frm=0;i_frm<i_sel;i_frm++){
+      gtk_tree_path_next(path);
+  }
+  gtk_tree_model_get_iter (model, &iter, path);
+
+  gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
+		     COLUMN_FRAME_COUNT, hl->frame[i_sel].cal, -1);
 }
 
 

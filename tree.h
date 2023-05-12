@@ -4,6 +4,7 @@ enum
   COLUMN_FRAME_NAME,
   COLUMN_FRAME_TYPE,
   COLUMN_FRAME_QLR,
+  COLUMN_FRAME_CAL,
   COLUMN_FRAME_PROP,
   COLUMN_FRAME_OBSERVER,
   COLUMN_FRAME_DATE,
@@ -29,3 +30,4 @@ void frame_tree_update_item();
 void frame_tree_update_note();
 void frame_tree_select_last();
 void frame_tree_update_ql();
+void frame_tree_update_cal();

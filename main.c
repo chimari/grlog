@@ -72,17 +72,17 @@ void check_reduced_spectra(typHLOG *hl){
 
   for(i=0;i<hl->num;i++){
     refresh=FALSE;
-    if(!hl->frame[i].qlr){
+    if(hl->frame[i].qlr!=QLR_DONE){
       tmp=g_strdup_printf("%s%sG%08docs_ecfw_1d.fits",
 			  hl->wdir,
 			  G_DIR_SEPARATOR_S,
 			  hl->frame[i].idnum);
       if(access(tmp,F_OK)==0){
-	hl->frame[i].qlr=TRUE;
+	hl->frame[i].qlr=QLR_DONE;
 	refresh=TRUE;
       }
       else{
-	hl->frame[i].qlr=FALSE;
+	hl->frame[i].qlr=QLR_NONE;
       }
       if(refresh){
 	hl->frame[i].note.cnt=get_cnt(hl, i);
@@ -163,6 +163,9 @@ void init_frame(FRAMEpara *frame){
   frame->note.time=0;
   frame->note.auto_fl=FALSE;
   frame->note.cnt=-1;
+  
+  frame->qlr=QLR_NONE;
+  frame->cal=QLCAL_NONE;
 }
 
 void get_jst_day(gint *year, gint *mon, gint *mday){
@@ -1225,10 +1228,10 @@ int printfits(typHLOG *hl, char *inf){
 			  G_DIR_SEPARATOR_S,
 			  hl->frame[hl->num].idnum);
       if(access(tmp, F_OK)==0){
-	hl->frame[hl->num].qlr=TRUE;
+	hl->frame[hl->num].qlr=QLR_DONE;
       }
       else{
-	hl->frame[hl->num].qlr=FALSE;
+	hl->frame[hl->num].qlr=QLR_NONE;
       }
       g_free(tmp);
       

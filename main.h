@@ -76,6 +76,8 @@
 
 enum{QL_THAR, QL_FLAT, QL_OBJECT, QL_OBJECT_BATCH, QL_SPLOT, QL_MASK, QL_BLAZE, NUM_QL};
 
+enum{QLR_NONE, QLR_NOW, QLR_DONE, NUM_QLR};
+
 
 #define FLAT_IN "flat.in"
 
@@ -98,6 +100,8 @@ enum{OPEN_AP, OPEN_FLAT, OPEN_THAR, OPEN_MASK, OPEN_BLAZE,
 
 enum{DISP_ALL, DISP_NORMAL, DISP_I2, DISP_OBJECT, DISP_FLAT, DISP_COMP,
      NUM_DISP};
+
+enum{QLCAL_NONE, QLCAL_FLAT, QLCAL_FLAT0, QLCAL_COMP, QLCAL_COMP0, NUM_QLCAL};
 
 static gchar *disp_name[]={
   "Display All",
@@ -395,7 +399,8 @@ struct _FRAMEpara{
 
   GtkWidget *w_note;
 
-  gboolean qlr;
+  gint qlr;
+  gint cal;
 };
 
 typedef struct _typHLOG typHLOG;

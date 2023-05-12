@@ -19,9 +19,11 @@ gboolean check_ql(gpointer gdata){
     switch(hl->ql_loop){
     case QL_THAR:
       finish_thar(hl);
+      tree_update_frame(hl);
       break;
     case QL_FLAT:
       finish_flat(hl);
+      tree_update_frame(hl);
       break;
     case QL_OBJECT:
     case QL_OBJECT_BATCH:
@@ -1303,6 +1305,8 @@ void iraf_obj(typHLOG *hl, gint i_sel, gint i_file){
   hl->ql_loop=QL_OBJECT;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
 			     (gpointer)hl);
+  hl->frame[i_sel].qlr=QLR_NOW;
+  tree_update_frame(hl);
   ext_play(tmp);
   
   g_free(tmp);
@@ -1424,7 +1428,6 @@ void make_obj_batch(typHLOG *hl, gchar *obj_in){
 		      hl->ql_mask,
 		      hl->ql_lock);
 
-  printf("%s\n",tmp);
   hl->ql_loop=QL_OBJECT_BATCH;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
 			     (gpointer)hl);
@@ -1519,6 +1522,7 @@ void iraf_flat(typHLOG *hl, gint i_sel, gint i_file, gchar *flat_in){
   if(!hl->ql_ap_new){
     hl->ql_ap_new=g_strdup_printf("Ap.%08d", i_file);
   }
+  hl->frame[i_sel].cal=QLCAL_FLAT0;
   
   tmp=g_strdup_printf("echo %08d >> %s",
 		      i_file,
@@ -1531,6 +1535,7 @@ void iraf_flat(typHLOG *hl, gint i_sel, gint i_file, gchar *flat_in){
 
 void finish_flat(typHLOG *hl){
   gchar *tmp, *tmp_ap, *tmp_flat;
+  gint i;
 
   tmp=g_strconcat(hl->wdir,
 		  G_DIR_SEPARATOR_S,
@@ -1560,6 +1565,15 @@ void finish_flat(typHLOG *hl){
 		  tmp_flat,
 		  NULL);
     g_free(tmp_flat);
+
+    for(i=0;i<hl->num;i++){
+      if(hl->frame[i].cal==QLCAL_FLAT0){
+	hl->frame[i].cal=QLCAL_FLAT;
+      }
+      else{
+	hl->frame[i].cal=QLCAL_NONE;
+      }
+    }
   }
   else{
     popup_message(hl->w_top, 
@@ -1573,6 +1587,11 @@ void finish_flat(typHLOG *hl){
 		  " ",
 		  "Failed to create a new Flat frame.",
 		  NULL);
+    for(i=0;i<hl->num;i++){
+      if(hl->frame[i].cal==QLCAL_FLAT0){
+	hl->frame[i].cal=QLCAL_NONE;
+      }
+    }
   }
   
   g_free(tmp);
@@ -1645,6 +1664,7 @@ void make_flat(typHLOG *hl, gchar *flat_in){
   hl->ql_loop=QL_FLAT;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
 			     (gpointer)hl);
+  tree_update_frame(hl);
   ext_play(tmp);
   g_free(tmp); 
 }
@@ -1729,6 +1749,7 @@ void ql_flat_red(GtkWidget *w, gpointer gdata){
 void finish_thar(typHLOG *hl){
   gchar *tmp;
   gchar *tmp_1d, *tmp_2d;
+  gint i;
   
   tmp=g_strconcat(hl->wdir,
 		  G_DIR_SEPARATOR_S,
@@ -1759,6 +1780,15 @@ void finish_thar(typHLOG *hl){
 		  NULL);
     g_free(tmp_2d);
     g_free(tmp_1d);
+    
+    for(i=0;i<hl->num;i++){
+      if(hl->frame[i].cal==QLCAL_COMP0){
+	hl->frame[i].cal=QLCAL_COMP; 
+      }
+      else{
+	hl->frame[i].cal=QLCAL_NONE; 
+      }
+    }
   }
   else{
     popup_message(hl->w_top, 
@@ -1772,6 +1802,11 @@ void finish_thar(typHLOG *hl){
 		  " ",
 		  "Failed to create new Comparison frames.",
 		  NULL);
+    for(i=0;i<hl->num;i++){
+      if(hl->frame[i].cal==QLCAL_COMP0){
+	hl->frame[i].cal=QLCAL_NONE;
+      }
+    }
   }    
 }
 
@@ -1883,6 +1918,7 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
 
   if(hl->ql_thar_new) g_free(hl->ql_thar_new);
   hl->ql_thar_new=g_strdup_printf("ThAr.%08d", hl->frame[i_sel].idnum);
+  hl->frame[i_sel].cal=QLCAL_COMP0;
 
   tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s \"%08d\" %s %s %s %s;rm -rf %s\'",
 		      hl->ql_terminal,
@@ -1902,6 +1938,7 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
   hl->ql_loop=QL_THAR;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
 			     (gpointer)hl);
+  tree_update_frame(hl);
   ext_play(tmp);
   
   g_free(tmp);
