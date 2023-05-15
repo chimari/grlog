@@ -3233,23 +3233,31 @@ void show_version (GtkWidget *widget, gpointer gdata)
 void usage(void)
 {
   g_print(" grlog : Seimei / GAOES-RV Obs-Log Editor   Ver"VERSION"\n");
-  g_print("  [usage] %% grlog [-s shared_dir] [-w work_dir] [-h] [-u] data_dir\n");
+  g_print("  [usage] %% grlog [-s shared_dir] [-w work_dir] [-l login.cl_dir] [-h] [-u] data_dir\n");
+  g_print("                shared_dir  : dir. where the ref frames and QL py scripts are located\n");
+  g_print("                                                  (def.: HOME$/IRAF/GAOES-RV_ql/)\n");
+  g_print("                work_dir    : working dir. for QL (def.: <data_dir>/ql/)\n");
+  g_print("                login.cl_dir: dir. where login.cl is located (def.: HOME$/)\n");
+  g_print("                data_dir    : dir. where RAW data (GRA????????.fits) are located\n");
 
   exit(0);
 }
-
 
 void get_option(int argc, char **argv, typHLOG *hl)
 {
   int i_opt;
   int valid=1;
-  gchar *cwdname=NULL, *dbase;
+  gchar *cwdname=NULL, *dbase, *argdir;
 
   hl->sdir=NULL;
   hl->wdir=NULL;
+
+  if(argc<2){
+    usage();
+  }
   
   i_opt = 1;
-  while((i_opt < argc-1)&&(valid==1)) {
+  while((i_opt < argc)&&(valid==1)) {
     if(strcmp(argv[i_opt],"-s") == 0){ 
       if(i_opt+1 < argc ) {
 	i_opt++;
@@ -3262,6 +3270,25 @@ void get_option(int argc, char **argv, typHLOG *hl)
 	}
 	else{
 	  hl->sdir=g_strdup(argv[i_opt]);
+	}
+	i_opt++;
+      }
+      else{
+	valid = 0;
+      }
+    }
+    else if(strcmp(argv[i_opt],"-l") == 0){ 
+      if(i_opt+1 < argc ) {
+	i_opt++;
+	if(!g_path_is_absolute(g_path_get_dirname(argv[i_opt]))){
+	  cwdname=g_malloc0(sizeof(gchar)*1024);
+	  if(!getcwd(cwdname,1024)){
+	    fprintf(stderr, "Warning: Could not find the login.cl directory.");
+	  }
+	  hl->udir=g_strconcat(cwdname,"/",argv[i_opt],NULL);
+	}
+	else{
+	  hl->udir=g_strdup(argv[i_opt]);
 	}
 	i_opt++;
       }
@@ -3307,14 +3334,36 @@ void get_option(int argc, char **argv, typHLOG *hl)
       i_opt++;
       usage();
     }
-    else if ((strcmp(argv[i_opt], "-u") == 0) ||
+    else if ((strcmp(argv[i_opt], "-d") == 0) ||
 	     (strcmp(argv[i_opt], "--debug") == 0)) {
       hl->upd_flag=TRUE;
       i_opt++;
     }
     else{
-      fprintf(stderr, "Warning: detected invalid command line option.\n");
-      usage();
+      if(i_opt=argc-1){
+	argdir=g_strdup(argv[i_opt]);
+	
+	if(argdir[strlen(argdir)-1]=='/'){
+	  hl->ddir=g_strndup(argdir,strlen(argdir)-1);
+	}
+	else{
+	  hl->ddir=g_strdup(argdir);
+	}
+	g_free(argdir);
+
+	if(access(hl->ddir,F_OK)==0){
+	  printf(" Data Dir : %s\n",hl->ddir);
+	  valid = 0;
+	}
+	else{
+	  fprintf(stderr, "Warning: Cannot access to the data dir \"%s\".\n", hl->ddir);
+	  usage();
+	}
+      }
+      else{
+	fprintf(stderr, "Warning: detected invalid command line option.\n");
+	usage();
+      }
     }
 
   }
@@ -3336,9 +3385,8 @@ int main(int argc, char* argv[]){
   
   memset(&tmpt2, 0x00, sizeof(struct tm));
 
-
+  
   get_option(argc, argv, hl);
-  argdir=g_strdup(argv[argc-1]);
 
   load_cfg(hl);
 
@@ -3356,13 +3404,6 @@ int main(int argc, char* argv[]){
   write_msmtprc();
 
 
-  if(argdir[strlen(argdir)-1]=='/'){
-    hl->ddir=g_strndup(argdir,strlen(argdir)-1);
-  }
-  else{
-    hl->ddir=g_strdup(argdir);
-  }
-  g_free(argdir);
   hl->num=0;
   hl->idnum0=0;
   hl->mail=g_strdup(DEF_MAIL);
@@ -3450,8 +3491,8 @@ int main(int argc, char* argv[]){
   hl->ql_timer=-1;
   if(!hl->wdir) hl->wdir=get_work_dir(hl);
   if(!hl->sdir) hl->sdir=get_share_dir(hl);
-  
   if(!hl->udir) hl->udir=get_logincl_dir(hl);
+  
   hl->spass=NULL;
   hl->iraf_hdsql_r=0;
   hl->file_write=NULL;

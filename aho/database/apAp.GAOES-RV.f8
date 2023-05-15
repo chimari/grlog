@@ -1,0 +1,450 @@
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 1 91.87337 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	1
+	beam	1
+	center	91.87337 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		761.
+		4061.
+		19.72235
+		94.78717
+		-2.334421
+		-0.08921234
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 2 242.8345 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	2
+	beam	2
+	center	242.8345 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		4071.
+		-1.88008
+		116.9783
+		-3.324994
+		-0.08262735
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 3 390.8564 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	3
+	beam	3
+	center	390.8564 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		4071.
+		-1.830113
+		115.7803
+		-3.184551
+		-0.0598534
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 4 535.9837 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	4
+	beam	4
+	center	535.9837 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		4071.
+		-1.779099
+		114.6329
+		-3.076033
+		-0.06152966
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 5 678.2985 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	5
+	beam	5
+	center	678.2985 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		4071.
+		-1.727385
+		113.4978
+		-2.944916
+		-0.07339434
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 6 817.9016 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	6
+	beam	6
+	center	817.9016 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		4071.
+		-1.688106
+		112.3763
+		-2.849344
+		-0.06612856
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 7 954.8396 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	7
+	beam	7
+	center	954.8396 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		4071.
+		-1.634999
+		111.2825
+		-2.73678
+		-0.06979566
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 8 1089.211 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	8
+	beam	8
+	center	1089.211 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		4071.
+		-1.583048
+		110.2035
+		-2.65707
+		-0.03581152
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 9 1221.104 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	9
+	beam	9
+	center	1221.104 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		4071.
+		-1.54221
+		109.1565
+		-2.52976
+		-0.0266747
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 10 1350.566 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	10
+	beam	10
+	center	1350.566 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		4071.
+		-1.486765
+		108.1255
+		-2.420879
+		-0.03212968
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 11 1477.689 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	11
+	beam	11
+	center	1477.689 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		4071.
+		-1.439859
+		107.1045
+		-2.306641
+		-0.03078358
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 12 1602.527 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	12
+	beam	12
+	center	1602.527 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		4071.
+		-1.394603
+		106.103
+		-2.192012
+		-0.04204646
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 13 1725.1 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	13
+	beam	13
+	center	1725.1 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		4071.
+		-1.296689
+		105.1286
+		-2.06595
+		-0.03777601
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 14 1845.564 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	14
+	beam	14
+	center	1845.564 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		4071.
+		-1.250607
+		104.1636
+		-1.94025
+		-0.03274845
+
+# Mon 18:28:20 24-Apr-2023
+begin	aperture Ap.GAOES-RV.f8 15 1963.896 2051.
+	image	Ap.GAOES-RV.f8
+	aperture	15
+	beam	15
+	center	1963.896 2051.
+	low	0. -2050.
+	high	1. 2051.
+	background
+		xmin -10.
+		xmax 10.
+		function chebyshev
+		order 1
+		sample -10:-6,6:10
+		naverage -3
+		niterate 0
+		low_reject 3.
+		high_reject 3.
+		grow 0.
+	axis	1
+	curve	8
+		2.
+		4.
+		21.
+		3516.
+		-15.13716
+		89.71262
+		-1.351672
+		-0.04750711
+
