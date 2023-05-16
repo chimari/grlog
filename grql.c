@@ -1570,7 +1570,7 @@ void finish_flat(typHLOG *hl){
       if(hl->frame[i].cal==QLCAL_FLAT0){
 	hl->frame[i].cal=QLCAL_FLAT;
       }
-      else{
+      else if(hl->frame[i].cal==QLCAL_FLAT){
 	hl->frame[i].cal=QLCAL_NONE;
       }
     }
@@ -1785,7 +1785,7 @@ void finish_thar(typHLOG *hl){
       if(hl->frame[i].cal==QLCAL_COMP0){
 	hl->frame[i].cal=QLCAL_COMP; 
       }
-      else{
+      else if(hl->frame[i].cal==QLCAL_COMP){
 	hl->frame[i].cal=QLCAL_NONE; 
       }
     }

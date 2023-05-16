@@ -2018,6 +2018,9 @@ void do_pyraf_conf (GtkWidget *widget, gpointer gdata)
   if(GTK_IS_WIDGET(dialog)) gtk_widget_destroy(dialog);
   flagChildDialog=FALSE;
 
+  if(!hl->ql_terminal) hl->ql_terminal=g_strdup(" ");
+  if(!hl->ql_python) hl->ql_python=g_strdup(" ");
+
   save_cfg(hl);
 }
 
