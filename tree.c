@@ -620,6 +620,7 @@ void frame_tree_update_item(typHLOG *hl,
   }
 }
 
+/*
 void frame_tree_update_note(typHLOG *hl, 
 			    GtkTreeModel *model, 
 			    GtkTreeIter iter, 
@@ -628,6 +629,7 @@ void frame_tree_update_note(typHLOG *hl,
   gtk_list_store_set (GTK_LIST_STORE(model), &iter,
 		      -1);
 }
+*/
 
 void frame_tree_get_selected (GtkTreeModel *model, GtkTreePath *path, 
 		    GtkTreeIter *iter, gpointer gdata)
@@ -939,6 +941,28 @@ void frame_tree_update_ql (typHLOG *hl, gint i_sel){
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
 		       COLUMN_FRAME_COUNT, hl->frame[i_sel].note.cnt, -1);
   }
+}
+
+void frame_tree_update_note (typHLOG *hl, gint i_sel){
+  GtkTreeModel *model 
+    = gtk_tree_view_get_model(GTK_TREE_VIEW(hl->frame_tree));
+  GtkTreeIter iter;
+  GtkTreePath *path;
+  gint i_frm;
+
+  path=gtk_tree_path_new_first();
+
+  for(i_frm=0;i_frm<i_sel;i_frm++){
+      gtk_tree_path_next(path);
+  }
+  gtk_tree_model_get_iter (model, &iter, path);
+
+  if(hl->frame[i_sel].note.txt){
+    gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
+		       COLUMN_FRAME_NOTE, hl->frame[i_sel].note.txt, -1);
+    tree_update_frame(hl);
+  }
+  gtk_tree_path_free (path);
 }
 
 void frame_tree_update_cal (typHLOG *hl, gint i_sel){

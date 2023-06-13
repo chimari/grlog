@@ -2411,7 +2411,7 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
       
     case OPEN_LOG:
       my_file_chooser_add_filter(fdialog,
-				 "Obs Log Text File", "*.eml", ".txt",
+				 "Obs Log Text File", "*.csv",
 				 NULL);
       break;
 

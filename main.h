@@ -71,6 +71,8 @@
 #define GAOES_ST_X (-54)
 #define GAOES_ED_X 53
 
+#define MAX_ENTRY 2000
+
 #define QL_PYTHON "python3"
 #define QL_TERMINAL "xterm -geometry 85x10 -e"
 
@@ -443,6 +445,7 @@ struct _typHLOG{
   GtkWidget *scr_combo;
 
   gboolean upd_flag;
+  gboolean dbg_flag;
   gboolean date_flag;
   gint disp_flag;
   gint sort_flag;

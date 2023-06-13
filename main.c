@@ -38,6 +38,7 @@ void show_version();
 gboolean check_scan ();
 
 void do_save();
+void do_load();
 
 // Ya is temporary (using Yb setting)
 const SetupEntry setups[] = {
@@ -732,13 +733,17 @@ static void load_cfg (typHLOG *hl)
 
   cfgfile = xmms_cfg_open_file(filename);
   if (cfgfile) {
-    if(xmms_cfg_read_string(cfgfile, "Directory",
-			    "Share",&c_buf)){
-      hl->sdir=g_strdup(c_buf);
+    if(!hl->sdir){
+      if(xmms_cfg_read_string(cfgfile, "Directory",
+			      "Share",&c_buf)){
+	hl->sdir=g_strdup(c_buf);
+      }
     }
-    if(xmms_cfg_read_string(cfgfile, "Directory",
-			    "User",&c_buf)){
-      hl->udir=g_strdup(c_buf);
+    if(!hl->udir){
+      if(xmms_cfg_read_string(cfgfile, "Directory",
+			      "User",&c_buf)){
+	hl->udir=g_strdup(c_buf);
+      }
     }
       
     if(xmms_cfg_read_string(cfgfile, "PyRAF",
@@ -1018,21 +1023,21 @@ void update_frame_tree(typHLOG *hl, gboolean force_flg){
 
   memset(&tmpt2, 0x00, sizeof(struct tm));
   
-#ifdef DEBUG
-  fprintf(stderr, "Start Load\n");
-#endif
+  if(hl->dbg_flag){
+    fprintf(stderr, "Start Load\n");
+  }
   if((hl->num_old==0)&&(hl->num!=0)){
     // New load
     load_note(hl,TRUE);
   }
   else{
     // No change or Appended New frame
-      load_note(hl,FALSE);
+    load_note(hl,FALSE);
   }
 
-#ifdef DEBUG
-  fprintf(stderr, "End Load\n");
-#endif
+  if(hl->dbg_flag){
+    fprintf(stderr, "End Load\n");
+  }
   
   // No change
   if(hl->num_old==hl->num){
@@ -1229,6 +1234,7 @@ int printfits(typHLOG *hl, char *inf){
 			  hl->frame[hl->num].idnum);
       if(access(tmp, F_OK)==0){
 	hl->frame[hl->num].qlr=QLR_DONE;
+	hl->frame[hl->num].note.cnt=get_cnt(hl, hl->num);
       }
       else{
 	hl->frame[hl->num].qlr=QLR_NONE;
@@ -1368,51 +1374,72 @@ void WriteLog(typHLOG *hl, FILE *fp){
 }
 
 void ReadLog(typHLOG *hl,  FILE *fp){
-  gchar *buf, *c, *n, *fname=NULL;
-  gint i_frm=0, min_line;
+  gchar *buf, *c, *n, *fname=NULL, *tmp_char;
+  gint i, id_tgt, min_line,cnt;
   
+
   while(!feof(fp)){
-    if((buf=fgets_new(fp))!=NULL){
-      if(strlen(buf)>10){
-	c=buf+4+2;
-	if(strncmp(c,"GRA",3)==0){
-	  if(i_frm==0){
-	    min_line=strlen(buf);
-	  }
-	  else if(strlen(buf)<min_line){
-	    min_line=strlen(buf);
-	  }
-	  i_frm++;
-	}
-      }
+    if((buf=fgets_new(fp))==NULL){
+      break;
     }
-  }
-
-  fseek(fp, 0L, SEEK_SET);
-  
-  while(!feof(fp)){
-    if((buf=fgets_new(fp))!=NULL){
-      if(strlen(buf)>10){
-	c=buf+4+2;
-	if(strncmp(c,"GRA",3)==0){
-	  if(strlen(buf)>min_line){
-	    fname=g_strndup(buf+4+2,12);
-
-	    for(i_frm=0;i_frm<hl->num;i_frm++){
-	      if(strcmp(fname,hl->frame[i_frm].id)==0){
-		c=buf+min_line;
-		if(hl->frame[i_frm].note.txt) g_free(hl->frame[i_frm].note.txt);
-		hl->frame[i_frm].note.txt=g_strdup(c);
-		hl->frame[i_frm].note.auto_fl=TRUE;
-		break;
-	      }
+    else if(strlen(buf)<10){
+      // skip
+    }
+    else if(buf[0]==0x23){
+      // skip
+    }
+    else{
+      // No.
+      c=(char *)strtok(buf,",");
+      // Frame ID
+      c=(char *)strtok(NULL,",");
+      fname=g_strdup(c+1);
+      for(i=0;i<hl->num;i++){
+	if(strcmp(fname,hl->frame[i].id)==0){
+	  // Object Name
+	  c=(char *)strtok(NULL,",");
+	  // Type
+	  c=(char *)strtok(NULL,",");
+	  // Prop ID
+	  c=(char *)strtok(NULL,",");
+	  // Observer
+	  c=(char *)strtok(NULL,",");
+	  // Date
+	  c=(char *)strtok(NULL,",");
+	  // JST
+	  c=(char *)strtok(NULL,",");
+	  // UT
+	  c=(char *)strtok(NULL,",");
+	  // MJD
+	  c=(char *)strtok(NULL,",");
+	  // EXP
+	  c=(char *)strtok(NULL,",");
+	  // SECZ
+	  c=(char *)strtok(NULL,",");
+	  // I2Cell
+	  c=(char *)strtok(NULL,",");
+	  // Count
+	  c=(char *)strtok(NULL,",");
+	  cnt=atoi(c);
+	  if(cnt>0){
+	    hl->frame[i].note.cnt=cnt;
+	    frame_tree_update_ql(hl, i);
+	  }
+	  // Note
+	  if((c=(char *)strtok(NULL,"\""))!=NULL){
+	    if((c=(char *)strtok(NULL,"\"\r\n"))!=NULL){
+	      hl->frame[i].note.time=time(NULL);
+	      hl->frame[i].note.txt=g_strdup(c);
+	      frame_tree_update_note(hl, i);
 	    }
-	    g_free(fname);
 	  }
+	  break;
 	}
       }
+      g_free(fname);
     }
   }
+  save_note(hl);
 }
 
 void SendMail(GtkWidget *w, gpointer gdata){
@@ -1485,6 +1512,27 @@ void do_save (GtkWidget *widget, gpointer gdata)
   }
 
   grlog_OpenFile(hl, SAVE_LOG);
+  
+  flagChildDialog=FALSE;
+}
+
+void do_load (GtkWidget *widget, gpointer gdata)
+{
+  typHLOG *hl;
+
+  hl=(typHLOG *)gdata;
+  
+  if(flagChildDialog){
+    return;
+  }
+  else{
+    flagChildDialog=TRUE;
+  }
+
+  grlog_OpenFile(hl, OPEN_LOG);
+  update_frame_tree(hl, FALSE);
+  
+  flagChildDialog=FALSE;
 }
 
 void do_mail (GtkWidget *widget, gpointer gdata)
@@ -1576,30 +1624,6 @@ void do_mail (GtkWidget *widget, gpointer gdata)
   flagChildDialog=FALSE;
 }
 
-
-void do_read_log(GtkWidget *widget, gpointer gdata){
-  typHLOG *hl=(typHLOG *)gdata;
-  GtkTreeIter iter;
-  GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(hl->frame_tree));
-  GtkTreePath *path;
-  gint i_frm;
-
-  grlog_OpenFile(hl, OPEN_LOG);
-
-  update_frame_tree(hl, FALSE);
-
-  path=gtk_tree_path_new_first();
-
-  for(i_frm=0;i_frm<hl->num;i_frm++){
-    gtk_tree_model_get_iter (model, &iter, path);
-    gtk_list_store_set (GTK_LIST_STORE(model), &iter,
-			COLUMN_FRAME_NOTE, hl->frame[i_frm].note.txt, -1);
-    gtk_list_store_set (GTK_LIST_STORE(model), &iter,
-			COLUMN_FRAME_COUNT, hl->frame[i_frm].note.cnt, -1);
-    gtk_tree_path_next(path);
-  }
-  gtk_tree_path_free(path);
-}
 
 
 void do_cp_cal(GtkWidget *widget, gpointer gdata){
@@ -2258,40 +2282,41 @@ gint printdir(typHLOG *hl){
   struct stat statbuf;
   int newflag=0;
   int i,n;
+  int i_entry=0;
   GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(hl->frame_tree));
 
   if((dp = opendir(hl->ddir)) == NULL){
     fprintf(stderr, "cannot open directory: %s\n",hl->ddir);
     return (-1);
   }
-#ifdef DEBUG
   else{
-    fprintf(stderr, "Reading: %s\n",hl->ddir);
+    if(hl->dbg_flag){
+      fprintf(stderr, "Reading: %s\n",hl->ddir);
+    }
   }
-#endif
   
   chdir(hl->ddir);
   
-  while((entry=readdir(dp))!=NULL){
+  while(((entry=readdir(dp))!=NULL)&&(i_entry<MAX_ENTRY)){
     stat(entry->d_name,&statbuf);
     if((!strncmp(entry->d_name,"GRA",3))&&(strlen(entry->d_name)==(3+8+5))){
       if(hl->upd_flag){
         if(!upd0){
 	  if(labs(statbuf.st_ctime-hl->seek_time)<5) sleep(5);
-#ifdef DEBUG
-	  printf("1: %s %s",entry->d_name,
-		 asctime(localtime(&hl->fr_time)));
-#endif
+	  if(hl->dbg_flag){
+	    printf("1: %s %s",entry->d_name,
+		   asctime(localtime(&hl->fr_time)));
+	  }
 	  newflag+=printfits(hl,entry->d_name);
 	}
 	else{
 	  if( (statbuf.st_ctime>=hl->seek_time)
 	      && (statbuf.st_ctime < hl->to_time)){
 	    if(statbuf.st_ctime-hl->seek_time<5) sleep(5);
-#ifdef DEBUG
-	    printf("1: %s %s",entry->d_name,
-		   asctime(localtime(&hl->fr_time)));
-#endif
+	    if(hl->dbg_flag){
+	      printf("1: %s %s",entry->d_name,
+		     asctime(localtime(&hl->fr_time)));
+	    }
 	    newflag+=printfits(hl,entry->d_name);
 	  }
 	}
@@ -2301,6 +2326,8 @@ gint printdir(typHLOG *hl){
       }
       check_reduced_spectra(hl);
     }
+
+    i_entry++;
   }
     
   if(hl->upd_flag){
@@ -2308,23 +2335,28 @@ gint printdir(typHLOG *hl){
       upd0=TRUE;
     }
   }
+
+  if(i_entry>=MAX_ENTRY){
+    fprintf(stderr, "Error! : too much entry in %s\n", hl->ddir);
+    return (-1);
+  }
   
   chdir("..");
   closedir(dp);
 
-#ifdef DEBUG
-  fprintf(stderr, "Start Save\n");
-#endif
+  if(hl->dbg_flag){
+    fprintf(stderr, "Start Save\n");
+  }
   save_note(hl);
-#ifdef DEBUG
-  fprintf(stderr, "End Save\n");
-#endif
+  if(hl->dbg_flag){
+    fprintf(stderr, "End Save\n");
+  }
   
   hl->seek_time=time(NULL);
   
-#ifdef DEBUG
-  fprintf(stderr, "End of Read: %s\n",hl->ddir);
-#endif
+  if(hl->dbg_flag){
+    fprintf(stderr, "End of Read: %s\n",hl->ddir);
+  }
 
   return (0);
 }
@@ -2365,7 +2397,7 @@ GtkWidget *make_menu(typHLOG *hl){
   gtk_widget_show (menu);
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_item), menu);
 
-  //File/Send Mail
+  //File/Save Log
 #ifdef USE_GTK3
   image=gtk_image_new_from_icon_name ("document-save", GTK_ICON_SIZE_MENU);
   popup_button =gtkut_image_menu_item_new_with_label (image, "Save Log");
@@ -2381,7 +2413,7 @@ GtkWidget *make_menu(typHLOG *hl){
   bar =gtk_separator_menu_item_new();
   gtk_widget_show (bar);
   gtk_container_add (GTK_CONTAINER (menu), bar);
-    
+
   if(hl->upd_flag){
     //File/Send Mail
 #ifdef USE_GTK3
@@ -2412,7 +2444,7 @@ GtkWidget *make_menu(typHLOG *hl){
 #endif
     gtk_widget_show (popup_button);
     gtk_container_add (GTK_CONTAINER (menu), popup_button);
-    g_signal_connect (popup_button, "activate",G_CALLBACK(do_read_log),(gpointer)hl);
+    g_signal_connect (popup_button, "activate",G_CALLBACK(do_load),(gpointer)hl);
   }
 
   bar =gtk_separator_menu_item_new();
@@ -3261,7 +3293,11 @@ void get_option(int argc, char **argv, typHLOG *hl)
   
   i_opt = 1;
   while((i_opt < argc)&&(valid==1)) {
-    if(strcmp(argv[i_opt],"-s") == 0){ 
+    if(strcmp(argv[i_opt],"-u") == 0){
+      hl->upd_flag=TRUE;
+      i_opt++;  
+    }
+    else if(strcmp(argv[i_opt],"-s") == 0){ 
       if(i_opt+1 < argc ) {
 	i_opt++;
 	if(!g_path_is_absolute(g_path_get_dirname(argv[i_opt]))){
@@ -3339,7 +3375,7 @@ void get_option(int argc, char **argv, typHLOG *hl)
     }
     else if ((strcmp(argv[i_opt], "-d") == 0) ||
 	     (strcmp(argv[i_opt], "--debug") == 0)) {
-      hl->upd_flag=TRUE;
+      hl->dbg_flag=TRUE;
       i_opt++;
     }
     else{
