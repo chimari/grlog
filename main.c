@@ -1244,17 +1244,27 @@ int printfits(typHLOG *hl, char *inf){
       if(hl->num==0){
 	if((!hl->upd_flag)&&(!e_init_flag)){
 	  fits_read_key_str(fptr, "DATE-OBS", caldate, 0, &status);
-	  t_year=atoi(strtok(caldate,"-"));
-	  t_mon=atoi(strtok(NULL,"-"));
-	  t_mday=atoi(strtok(NULL,"\0"));
-
-	  get_jst_day(&t_year, &t_mon, &t_mday);
-	  hl->fr_year=t_year;
-	  hl->fr_month=t_mon;
-	  hl->fr_day=t_mday;
-	  hl->buf_year=hl->fr_year;
-	  hl->buf_month=hl->fr_month;
-	  hl->buf_day=hl->fr_day;
+	  if(strlen(caldate)>8){
+	    t_year=atoi(strtok(caldate,"-"));
+	    t_mon=atoi(strtok(NULL,"-"));
+	    t_mday=atoi(strtok(NULL,"\0"));
+	    
+	    get_jst_day(&t_year, &t_mon, &t_mday);
+	    hl->fr_year=t_year;
+	    hl->fr_month=t_mon;
+	    hl->fr_day=t_mday;
+	    hl->buf_year=hl->fr_year;
+	    hl->buf_month=hl->fr_month;
+	    hl->buf_day=hl->fr_day;
+	  }
+	  else{
+	    hl->fr_year=2001;
+	    hl->fr_month=1;
+	    hl->fr_day=1;
+	    hl->buf_year=hl->fr_year;
+	    hl->buf_month=hl->fr_month;
+	    hl->buf_day=hl->fr_day;
+	  }
 
 	  set_fr_e_date(hl);
 
@@ -1278,18 +1288,34 @@ int printfits(typHLOG *hl, char *inf){
       hl->frame[hl->num].exp=(guint)f_buf;
       
       fits_read_key_str(fptr, "DATE-OBS", date_str, 0, &status);
-      hl->frame[hl->num].date=g_strdup(date_str);
+      if(strlen(date_str)>8){
+	hl->frame[hl->num].date=g_strdup(date_str);
+      }
+      else{
+	hl->frame[hl->num].date=g_strdup("2001-01-01");
+      }
       
       fits_read_key_str(fptr, "JST-STR", jst_str, 0, &status);
-      strncpy(jst,jst_str,5);
-      jst[5]='\0';
-      hl->frame[hl->num].jst=g_strdup(jst);
+      if(strlen(date_str)>5){
+	strncpy(jst,jst_str,5);
+	jst[5]='\0';
+	hl->frame[hl->num].jst=g_strdup(jst);
+      }
+      else{
+	hl->frame[hl->num].jst=g_strdup("00:00");
+      }
 
       fits_read_key_str(fptr, "UT-STR", ut_str, 0, &status);
-      strncpy(ut,ut_str,5);
-      ut[5]='\0';
-      hl->frame[hl->num].ut=g_strdup(ut);
+      if(strlen(ut_str)>5){
+	strncpy(ut,ut_str,5);
+	ut[5]='\0';
+	hl->frame[hl->num].ut=g_strdup(ut);
+      }
+      else{
+	hl->frame[hl->num].ut=g_strdup("00:00");
+      }
 
+      
       fits_read_key_flt(fptr, "MJD-STR", &f_buf, 0, &status);
       hl->frame[hl->num].mjd=(gdouble)f_buf;
       
@@ -2300,6 +2326,11 @@ gint printdir(typHLOG *hl){
   while(((entry=readdir(dp))!=NULL)&&(i_entry<MAX_ENTRY)){
     stat(entry->d_name,&statbuf);
     if((!strncmp(entry->d_name,"GRA",3))&&(strlen(entry->d_name)==(3+8+5))){
+      
+      if(hl->dbg_flag){
+	fprintf(stderr, " Checking: %s\n",entry->d_name);
+      }
+      
       if(hl->upd_flag){
         if(!upd0){
 	  if(labs(statbuf.st_ctime-hl->seek_time)<5) sleep(5);
