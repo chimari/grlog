@@ -76,6 +76,38 @@
 #define QL_PYTHON "python3"
 #define QL_TERMINAL "xterm -geometry 85x10 -e"
 
+#define SMOKA_LOG_HOST "www.o.kwasan.kyoto-u.ac.jp"
+#define SMOKA_LOG_PATH "/seimei_obs_log/add_comment.py"
+#define SMOKA_LOG_FILE "/tmp/grlog-www.txt"
+#define SEIMEI_PROXY_HOST "192.168.1.52"
+#define SEIMEI_PROXY_PORT "3128"
+
+#define GRLOG_HTTP_ERROR_GETHOST  -1
+#define GRLOG_HTTP_ERROR_SOCKET   -2
+#define GRLOG_HTTP_ERROR_CONNECT  -3
+#define GRLOG_HTTP_ERROR_TEMPFILE -4
+#define GRLOG_HTTP_ERROR_SSL -5
+#define GRLOG_HTTP_ERROR_FORK -6
+
+typedef struct _PARAMpost PARAMpost;
+struct _PARAMpost{
+  gint  flg;
+  gchar *key;
+  gchar *prm;
+};
+
+enum{ POST_NULL, 
+      POST_CONST, 
+      POST_INPUT
+};
+
+static const PARAMpost seimei_log_post[] = {
+  {POST_INPUT, "expid",   NULL},
+  {POST_CONST, "mode",    "add"},
+  {POST_INPUT, "remarks", NULL},
+  {POST_CONST, "submit_remarks", "Submit"},
+  {POST_NULL,  NULL, NULL}};
+
 enum{QL_THAR, QL_FLAT, QL_OBJECT, QL_OBJECT_BATCH, QL_SPLOT, QL_MASK, QL_BLAZE, NUM_QL};
 
 enum{QLR_NONE, QLR_NOW, QLR_DONE, NUM_QLR};
@@ -416,6 +448,17 @@ struct _typHLOG{
   GtkWidget *b_refresh;
   GtkWidget *w_status;
 
+  gchar *fcdb_host;
+  gchar *fcdb_path;
+  gchar *fcdb_file;
+  gchar *proxy_host;
+  gint proxy_port;
+  gboolean proxy_flag;
+  glong psz;
+
+  gchar *seimei_log_id;
+  gchar *seimei_log_txt;
+
   gchar *uname;
   gchar *wdir;
   gchar *sdir;
@@ -500,6 +543,7 @@ struct _typHLOG{
   gint mltree_search_i;
   gint mltree_search_iaddr[MAX_MAIL];
 
+  GCancellable   *sccancel;
   GThread        *scthread;
   GMainLoop      *scloop;
   gint scanning_timer;

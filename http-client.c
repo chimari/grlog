@@ -54,6 +54,139 @@ gboolean debug_flg=TRUE;
 gboolean debug_flg=FALSE;
 #endif
 
+char *my_strcasestr(const char *str, const char *pattern) {
+    size_t i;
+
+    if (!*pattern)
+        return (char*)str;
+
+    for (; *str; str++) {
+        if (toupper(*str) == toupper(*pattern)) {
+            for (i = 1;; i++) {
+                if (!pattern[i])
+                    return (char*)str;
+                if (toupper(str[i]) != toupper(pattern[i]))
+                    break;
+            }
+        }
+    }
+    return NULL;
+}
+
+gchar *make_rand16(){
+  int i;
+  gchar retc[17] ,*ret;
+  gchar ch;
+
+  srand ( time(NULL) );
+  for ( i = 0 ; i < 16 ; i++ ) {
+    ch = rand () % 62;
+    if (ch>=52){
+      retc[i]='0'+ch-52;
+    }
+    else if (ch>=26){
+      retc[i]='A'+ch-26;
+    }
+    else{
+      retc[i]='a'+ch;
+    }
+  }
+  retc[i]=0x00;
+
+  ret=g_strdup(retc);
+
+  return(ret);
+}
+
+//タイムアウト付きコネクト(非同期コネクト)
+int Connect(int socket, struct sockaddr * name, socklen_t namelen, gint timeout_sec)
+{
+  struct timeval timeout;
+  int result, flags;
+  fd_set readFd, writeFd, errFd;
+  int sockNum;
+
+  timeout.tv_sec=timeout_sec;
+  timeout.tv_usec=0;
+  
+  //接続前に一度非同期に変更
+  flags = fcntl(socket, F_GETFL);
+  if(-1 == flags)
+    {
+      return -1;
+    }
+  result = fcntl(socket, F_SETFL, flags | O_NONBLOCK);
+  if(-1 == result)
+    {
+        return -1;
+    }
+  
+  //接続
+  result = connect(socket, name, namelen);
+  if(result == -1)
+    {
+      if(EINPROGRESS == errno)
+	{
+	  //非同期接続成功だとここに入る。select()で完了を待つ。
+	  errno = 0;
+        }
+      else
+        {
+	  //接続失敗 同期に戻す。
+	  fcntl(socket, F_SETFL, flags );
+	  return -1;
+        }
+    }
+  
+  //同期に戻す。
+  result = fcntl(socket, F_SETFL, flags );
+  if(-1 == result)
+    {
+      //error
+      return -1;
+    }
+  
+  //セレクトで待つ
+  FD_ZERO(&readFd);
+  FD_ZERO(&writeFd);
+  FD_ZERO(&errFd);
+  FD_SET(socket, &readFd);
+  FD_SET(socket, &writeFd);
+  FD_SET(socket, &errFd);
+  sockNum = select(socket + 1, &readFd, &writeFd, &errFd, &timeout);
+  if(0 == sockNum)
+    {
+      //timeout error
+      return -1;
+    }
+  else if(FD_ISSET(socket, &readFd) || FD_ISSET(socket, &writeFd) )
+    {
+      //読み書きできる状態
+    }
+  else
+    {
+      //error
+      return -1;
+    }
+
+    //ソケットエラー確認
+    int optval = 0;
+    socklen_t optlen = (socklen_t)sizeof(optval);
+    errno = 0;
+    result = getsockopt(socket, SOL_SOCKET, SO_ERROR, (void *)&optval, &optlen);
+    if(result < 0)
+    {
+        //error
+    }
+    else if(0 != optval)
+    {
+        //error
+    }
+
+    return 0;
+}
+
+
 void check_msg_from_parent(){
 }
 
@@ -841,3 +974,389 @@ static void thread_cancel_http(GtkWidget *w, gpointer gdata)
   if(hl->ploop) g_main_loop_quit(hl->ploop);
 }
 
+
+int post_body_new(typHLOG *hl,
+		  gboolean wflag,
+		  int command_socket,
+		  SSL *ssl, 
+		  gchar *rand16,
+		  gboolean SSL_flag){
+  char send_mesg[BUF_LEN];          /* サーバに送るメッセージ */
+  char ins_mesg[BUF_LEN];
+  gint ip, plen, i, i_inst;
+  gint i_obj, grism, exp, repeat, filter, gain, frames;
+  gboolean sh, pc, ag, nw, queue;
+  gchar *send_buf1=NULL, *send_buf2=NULL;
+  gchar* sci_instrume=NULL, *tmp_inst=NULL;
+  gboolean init_flag=FALSE;
+  gboolean send_flag=TRUE;
+  gchar *tmp;
+  gint pa;
+  gdouble dexp;
+
+  {
+    ip=0;
+    plen=0;
+
+    while(1){
+      if(seimei_log_post[ip].key==NULL) break;
+      send_flag=TRUE;
+
+      switch(seimei_log_post[ip].flg){
+      case POST_NULL:
+	sprintf(send_mesg,
+		"%s=&",
+		seimei_log_post[ip].key);
+	break;
+
+      case POST_CONST:
+	if(strcmp(seimei_log_post[ip].key,"Submit_remarks")==0){
+	  sprintf(send_mesg,
+		  "%s=%s",
+		  seimei_log_post[ip].key,
+		  seimei_log_post[ip].prm);
+	}
+	else{
+	  sprintf(send_mesg,
+		  "%s=%s&",
+		  seimei_log_post[ip].key,
+		  seimei_log_post[ip].prm);
+	}
+	break;
+	
+      case POST_INPUT:
+	if(strcmp(seimei_log_post[ip].key,"expid")==0){
+	  sprintf(send_mesg,
+		  "%s=%s&",
+		  seimei_log_post[ip].key,
+		  hl->seimei_log_id);
+	}
+	else if(strcmp(seimei_log_post[ip].key,"remarks")==0){
+	  sprintf(send_mesg,
+		  "%s=%s&",
+		  seimei_log_post[ip].key,
+		  (hl->seimei_log_txt) ? hl->seimei_log_txt : " ");
+	}
+
+	break;
+      }
+
+
+      if(send_flag){
+	plen+=strlen(send_mesg);
+	
+	if(send_buf1) g_free(send_buf1);
+	if(send_buf2) send_buf1=g_strconcat(send_buf2,send_mesg,NULL);
+	else send_buf1=g_strdup(send_mesg);
+	if(send_buf2) g_free(send_buf2);
+	send_buf2=g_strdup(send_buf1);
+      }
+
+      ip++;
+    }
+
+
+    sprintf(send_mesg,"\r\n\r\n");
+    if(send_buf1) g_free(send_buf1);
+    send_buf1=g_strconcat(send_buf2,send_mesg,NULL);
+    
+    plen+=strlen(send_mesg);
+    
+    if(wflag){
+      if(SSL_flag){
+	write_to_SSLserver(ssl, send_buf1);
+      }
+      else{
+	write_to_server(command_socket, send_buf1);
+      }
+    }
+
+    if(send_buf1) g_free(send_buf1);
+    if(send_buf2) g_free(send_buf2);
+
+    // Seimei LOG
+  }
+
+  return(plen);
+}
+
+
+int http_c_fcdb_new(typHLOG *hl, gboolean SSL_flag, gboolean proxy_ssl){
+  int command_socket;           /* コマンド用ソケット */
+  int size;
+
+  gboolean fcdb_post=TRUE;
+
+  char send_mesg[BUF_LEN];          /* サーバに送るメッセージ */
+  char buf[BUF_LEN+1];
+  
+  FILE *fp_write;
+  FILE *fp_read;
+
+  struct addrinfo hints, *res;
+  struct sockaddr_in *addr_in;
+  struct in_addr addr;
+  int err, ret;
+
+  gboolean chunked_flag=FALSE;
+  gchar *cp;
+
+  gchar *rand16=NULL;
+  gint plen;
+
+  SSL *ssl;
+  SSL_CTX *ctx;
+
+  // Calculate Content-Length
+  if(fcdb_post){
+    rand16=make_rand16();
+    plen=post_body_new(hl, FALSE, 0, NULL, rand16, FALSE);
+  }
+   
+  check_msg_from_parent();
+
+  /* ホストの情報 (IP アドレスなど) を取得 */
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_family = AF_INET;
+
+  if ((err = getaddrinfo((hl->proxy_flag) ? hl->proxy_host : hl->fcdb_host,
+			 (SSL_flag) ? "https" : "http",
+			 &hints, &res)) !=0){
+    fprintf(stderr, "Bad hostname [%s]\n",
+	    (hl->proxy_flag) ? hl->proxy_host : hl->fcdb_host);
+    return(GRLOG_HTTP_ERROR_GETHOST);
+  }
+
+  check_msg_from_parent();
+
+  if(hl->proxy_flag){
+    addr_in = (struct sockaddr_in *)(res -> ai_addr);
+    addr_in -> sin_port=htons(hl->proxy_port);
+  }
+
+  /* ソケット生成 */
+  if( (command_socket = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0){
+    fprintf(stderr, "Failed to create a new socket.\n");
+    return(GRLOG_HTTP_ERROR_SOCKET);
+  }
+
+  check_msg_from_parent();
+
+  /* サーバに接続 */
+  if( Connect(command_socket, res->ai_addr, res->ai_addrlen, 10) == -1){
+    fprintf(stderr, "Failed to connect to %s .\n", hl->fcdb_host);
+    return(GRLOG_HTTP_ERROR_CONNECT);
+  }
+
+  check_msg_from_parent();
+
+  if(SSL_flag){  // HTTPS
+    SSL_load_error_strings();
+    SSL_library_init();
+    
+    ctx = SSL_CTX_new(SSLv23_client_method());
+    ssl = SSL_new(ctx);
+    err = SSL_set_fd(ssl, command_socket);
+    while((ret=SSL_connect(ssl))!=1){
+      err=SSL_get_error(ssl, ret);
+      if( (err==SSL_ERROR_WANT_READ)||(err==SSL_ERROR_WANT_WRITE) ){
+	g_usleep(100000);
+	g_warning("SSL_connect(): try again\n");
+	continue;
+      }
+      g_warning("SSL_connect() failed with error %d, ret=%d (%s)\n",
+		err, ret, ERR_error_string(ERR_get_error(), NULL));
+      return(GRLOG_HTTP_ERROR_SSL);
+    }
+    
+    check_msg_from_parent();
+  }
+  
+  // AddrInfoの解放
+  freeaddrinfo(res);
+
+  // HTTP/1.1 ではchunked対策が必要
+  hl->psz=0;
+  if(SSL_flag){  // HTTPS
+    if(fcdb_post){
+      sprintf(send_mesg, "POST %s HTTP/1.1\r\n", hl->fcdb_path);
+    }
+    else{
+      sprintf(send_mesg, "GET %s HTTP/1.1\r\n", hl->fcdb_path);
+    }
+    write_to_SSLserver(ssl, send_mesg);
+    
+    
+    sprintf(send_mesg, "User-Agent: Mozilla/5.0\r\n");
+    write_to_SSLserver(ssl, send_mesg);
+    
+    sprintf(send_mesg, "Host: %s\r\n", hl->fcdb_host);
+    write_to_SSLserver(ssl, send_mesg);
+  }
+  else{  // HTTP
+    if(hl->proxy_flag){
+      if(proxy_ssl){
+	if(fcdb_post){
+	  sprintf(send_mesg, "POST https://%s%s HTTP/1.1\r\n",
+		  hl->fcdb_host,hl->fcdb_path);
+	}
+	else{
+	  sprintf(send_mesg, "GET https://%s%s HTTP/1.1\r\n",
+		  hl->fcdb_host,hl->fcdb_path);
+	}
+      }
+      else{ 
+	if(fcdb_post){
+	  sprintf(send_mesg, "POST http://%s%s HTTP/1.1\r\n",
+		  hl->fcdb_host,hl->fcdb_path);
+	}
+	else{
+	  sprintf(send_mesg, "GET http://%s%s HTTP/1.1\r\n",
+		  hl->fcdb_host,hl->fcdb_path);
+	}
+      }
+    }
+    else{
+      if(fcdb_post){
+	sprintf(send_mesg, "POST %s HTTP/1.1\r\n", hl->fcdb_path);
+      }
+      else{
+	sprintf(send_mesg, "GET %s HTTP/1.1\r\n", hl->fcdb_path);
+      }
+    }
+    write_to_server(command_socket, send_mesg);
+    
+    sprintf(send_mesg, "User-Agent: Mozilla/5.0\r\n");
+    write_to_server(command_socket, send_mesg);
+
+    sprintf(send_mesg, "Host: %s\r\n", hl->fcdb_host);
+    write_to_server(command_socket, send_mesg);
+  }
+
+  // Header
+  {
+    sprintf(send_mesg, "Accept: application/xml, application/json\r\n");
+    if(SSL_flag){  // HTTPS
+      write_to_SSLserver(ssl, send_mesg);   
+    }
+    else{  // HTTP
+      write_to_server(command_socket, send_mesg);
+    }
+  }
+  
+  sprintf(send_mesg, "Connection: close\r\n");
+  if(SSL_flag){  // HTTPS
+    write_to_SSLserver(ssl, send_mesg);
+  }
+  else{  // HTTP
+    write_to_server(command_socket, send_mesg);
+  }
+
+
+  /////////// POST
+  if(fcdb_post){
+    sprintf(send_mesg, "Content-Length: %d\r\n", plen);
+    if(SSL_flag){  // HTTPS
+      write_to_SSLserver(ssl, send_mesg);
+    }
+    else{  // HTTP
+      write_to_server(command_socket, send_mesg);
+    }
+
+    sprintf(send_mesg, "Content-Type: application/x-www-form-urlencoded\r\n");
+
+    if(SSL_flag){  // HTTPS
+      write_to_SSLserver(ssl, send_mesg);
+    }
+    else{  // HTTP
+      write_to_server(command_socket, send_mesg);
+    }
+  }
+
+  sprintf(send_mesg, "\r\n");
+  if(SSL_flag){  // HTTPS
+    write_to_SSLserver(ssl, send_mesg);
+  }
+  else{  // HTTP
+    write_to_server(command_socket, send_mesg);
+  }
+  
+  // POST body
+  if(fcdb_post){
+    if(SSL_flag){
+      plen=post_body_new(hl, TRUE, 0, ssl, rand16, TRUE);
+    }
+    else{
+      plen=post_body_new(hl, TRUE, command_socket, NULL, rand16, FALSE);
+    }
+    if(rand16) g_free(rand16);
+  }
+
+  // Download a file
+  if((fp_write=fopen(hl->fcdb_file,"w"))==NULL){
+    fprintf(stderr," File Write Error  \"%s\" \n", hl->fcdb_file);
+    return(GRLOG_HTTP_ERROR_TEMPFILE);
+  }
+
+  
+  if(SSL_flag){  // HTTPS
+    while((size = ssl_gets(ssl, buf, BUF_LEN)) > 2 ){
+      // header lines
+      if(debug_flg){
+	fprintf(stderr,"[SSL] --> Header: %s", buf);
+      }
+      if(NULL != (cp = my_strcasestr(buf, "Transfer-Encoding: chunked"))){
+	chunked_flag=TRUE;
+      }
+      if(strncmp(buf,"Content-Length: ",strlen("Content-Length: "))==0){
+	cp = buf + strlen("Content-Length: ");
+	hl->psz=atol(cp);
+      }
+    }
+    do{ // data read
+      size = SSL_read(ssl, buf, BUF_LEN);
+      fwrite( &buf , size , 1 , fp_write ); 
+    }while(size >0);
+  }
+  else{  // HTTP
+    while((size = fd_gets(command_socket,buf,BUF_LEN)) > 2 ){
+      // header lines
+      if(debug_flg){
+	fprintf(stderr,"--> Header: %s", buf);
+      }
+      if(NULL != (cp = my_strcasestr(buf, "Transfer-Encoding: chunked"))){
+	chunked_flag=TRUE;
+      }
+      if(strncmp(buf,"Content-Length: ",strlen("Content-Length: "))==0){
+	cp = buf + strlen("Content-Length: ");
+	hl->psz=atol(cp);
+      }
+    }
+    do{ // data read
+      size = recv(command_socket,buf,BUF_LEN, 0);
+      fwrite( &buf , size , 1 , fp_write ); 
+    }while(size>0);
+  }
+      
+  fclose(fp_write);
+
+  check_msg_from_parent();
+
+  //if(chunked_flag) unchunk(hg->fcdb_file);
+
+  if((chmod(hl->fcdb_file,(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP |S_IROTH | S_IWOTH ))) != 0){
+    g_print("Cannot Chmod Temporary File %s!  Please check!!!\n",hl->fcdb_file);
+  }
+
+  if(SSL_flag){ // HTTPS
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    ERR_free_strings();
+  }
+  
+  close(command_socket);
+
+  return 0;
+}

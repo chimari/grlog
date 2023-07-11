@@ -69,7 +69,7 @@ int scp_write_remote(typHLOG *hl, gchar *result_file){
     
     if((fp=fopen(loclfile,"w"))==NULL){
       fprintf(stderr," File Write Error  \"%s\" \n", loclfile);
-      return;
+      return(-1);
     }
 
     WriteLog(hl, fp);

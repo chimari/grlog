@@ -891,6 +891,14 @@ static void cell_edited (GtkCellRendererText *cell,
 	hl->frame[i].note.time=time(NULL);
       }
       save_note(hl);
+
+      if(hl->seimei_log_id) g_free(hl->seimei_log_id);
+      hl->seimei_log_id=g_strdup(hl->frame[i].id);
+      
+      if(hl->seimei_log_txt) g_free(hl->seimei_log_txt);
+      hl->seimei_log_txt=g_strdup(hl->frame[i].note.txt);
+      
+      http_c_fcdb_new(hl, FALSE, FALSE);
     }
     break;
 

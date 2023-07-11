@@ -2241,6 +2241,7 @@ gboolean start_scan_command(gpointer gdata){
   while(my_main_iteration(FALSE));
   
   hl->scloop=g_main_loop_new(NULL, FALSE);
+  hl->sccancel=g_cancellable_new();
   hl->scthread=g_thread_new("grlog_scan",
 			    thread_scan_command, (gpointer)hl);
   g_main_loop_run(hl->scloop);
@@ -3508,6 +3509,14 @@ int main(int argc, char* argv[]){
   hl->buf_month=hl->fr_month;
   hl->buf_day=hl->fr_day;
 
+  hl->fcdb_host=g_strdup(SMOKA_LOG_HOST);
+  hl->fcdb_path=g_strdup(SMOKA_LOG_PATH);
+  hl->fcdb_file=g_strdup(SMOKA_LOG_FILE);
+  hl->proxy_host=g_strdup(SEIMEI_PROXY_HOST);
+  hl->proxy_port=SEIMEI_PROXY_PORT;
+  hl->seimei_log_id=NULL;
+  hl->seimei_log_txt=NULL;
+
   hl->scr_flag=SCR_AUTO;
 
   for(i=0;i<MAX_FRAME;i++){
@@ -3612,6 +3621,7 @@ int main(int argc, char* argv[]){
   
   hl->scanning_flag=FALSE;
   if(hl->upd_flag){
+    hl->proxy_flag=TRUE;
     check_reference_data(hl);
     prepare_pyraf(hl);
     
@@ -3620,6 +3630,7 @@ int main(int argc, char* argv[]){
 			    (gpointer)hl);
   }
   else{
+    hl->proxy_flag=FALSE;
     do_dir(NULL,(gpointer)hl);
     check_reference_data(hl);
     prepare_pyraf(hl);
