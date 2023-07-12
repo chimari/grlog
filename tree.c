@@ -854,6 +854,34 @@ static void cell_canceled (GtkCellRendererText *cell)
   Flag_tree_editing=FALSE;
 }
 
+void update_seimei_log(typHLOG *hl, gint i){
+  if(hl->seimei_log_id) g_free(hl->seimei_log_id);
+  hl->seimei_log_id=g_strdup(hl->frame[i].id);
+  
+  if(hl->seimei_log_txt) g_free(hl->seimei_log_txt);
+  if(hl->frame[i].note.txt){
+    if(hl->frame[i].note.cnt>0){
+      hl->seimei_log_txt=g_strdup_printf("%s, %de-",
+					 hl->frame[i].note.txt,
+					 hl->frame[i].note.cnt);
+    }
+    else{
+      hl->seimei_log_txt=g_strdup(hl->frame[i].note.txt);
+    }
+  }
+  else{
+    if(hl->frame[i].note.cnt>0){
+      hl->seimei_log_txt=g_strdup_printf("%de-",
+					 hl->frame[i].note.cnt);
+    }
+    else{
+      hl->seimei_log_txt=g_strdup(" ");
+    }
+  }
+  
+  http_c_fcdb_new(hl, FALSE, FALSE);
+}
+
 static void cell_edited (GtkCellRendererText *cell,
 			 const gchar         *path_string,
 			 const gchar         *new_text,
@@ -892,13 +920,7 @@ static void cell_edited (GtkCellRendererText *cell,
       }
       save_note(hl);
 
-      if(hl->seimei_log_id) g_free(hl->seimei_log_id);
-      hl->seimei_log_id=g_strdup(hl->frame[i].id);
-      
-      if(hl->seimei_log_txt) g_free(hl->seimei_log_txt);
-      hl->seimei_log_txt=g_strdup(hl->frame[i].note.txt);
-      
-      http_c_fcdb_new(hl, FALSE, FALSE);
+      update_seimei_log(hl, i);
     }
     break;
 
@@ -920,6 +942,8 @@ static void cell_edited (GtkCellRendererText *cell,
 	hl->frame[i].note.time=time(NULL);
       }
       save_note(hl);
+
+      update_seimei_log(hl, i);
     }
     break;
   }

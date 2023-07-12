@@ -653,4 +653,4 @@ gchar* get_setname_long();
 
 int scp_write_cal();
 void grlog_OpenFile();
-
+int http_c_fcdb_new();
