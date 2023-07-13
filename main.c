@@ -8,6 +8,7 @@
 
 #undef DEBUG
 
+gboolean debug_flg;
 gboolean flag_make_top=FALSE;
 gboolean flagChildDialog=FALSE;
 GtkWidget *frame_table;
@@ -1023,7 +1024,7 @@ void update_frame_tree(typHLOG *hl, gboolean force_flg){
 
   memset(&tmpt2, 0x00, sizeof(struct tm));
   
-  if(hl->dbg_flag){
+  if( debug_flg ){
     fprintf(stderr, "Start Load\n");
   }
   if((hl->num_old==0)&&(hl->num!=0)){
@@ -1035,7 +1036,7 @@ void update_frame_tree(typHLOG *hl, gboolean force_flg){
     load_note(hl,FALSE);
   }
 
-  if(hl->dbg_flag){
+  if(debug_flg){
     fprintf(stderr, "End Load\n");
   }
   
@@ -2317,7 +2318,7 @@ gint printdir(typHLOG *hl){
     return (-1);
   }
   else{
-    if(hl->dbg_flag){
+    if(debug_flg){
       fprintf(stderr, "Reading: %s\n",hl->ddir);
     }
   }
@@ -2328,14 +2329,14 @@ gint printdir(typHLOG *hl){
     stat(entry->d_name,&statbuf);
     if((!strncmp(entry->d_name,"GRA",3))&&(strlen(entry->d_name)==(3+8+5))){
       
-      if(hl->dbg_flag){
+      if(debug_flg){
 	fprintf(stderr, " Checking: %s\n",entry->d_name);
       }
       
       if(hl->upd_flag){
         if(!upd0){
 	  if(labs(statbuf.st_ctime-hl->seek_time)<5) sleep(5);
-	  if(hl->dbg_flag){
+	  if(debug_flg){
 	    printf("1: %s %s",entry->d_name,
 		   asctime(localtime(&hl->fr_time)));
 	  }
@@ -2345,7 +2346,7 @@ gint printdir(typHLOG *hl){
 	  if( (statbuf.st_ctime>=hl->seek_time)
 	      && (statbuf.st_ctime < hl->to_time)){
 	    if(statbuf.st_ctime-hl->seek_time<5) sleep(5);
-	    if(hl->dbg_flag){
+	    if(debug_flg){
 	      printf("1: %s %s",entry->d_name,
 		     asctime(localtime(&hl->fr_time)));
 	    }
@@ -2376,17 +2377,17 @@ gint printdir(typHLOG *hl){
   chdir("..");
   closedir(dp);
 
-  if(hl->dbg_flag){
+  if(debug_flg){
     fprintf(stderr, "Start Save\n");
   }
   save_note(hl);
-  if(hl->dbg_flag){
+  if(debug_flg){
     fprintf(stderr, "End Save\n");
   }
   
   hl->seek_time=time(NULL);
   
-  if(hl->dbg_flag){
+  if(debug_flg){
     fprintf(stderr, "End of Read: %s\n",hl->ddir);
   }
 
@@ -3316,6 +3317,8 @@ void get_option(int argc, char **argv, typHLOG *hl)
   int valid=1;
   gchar *cwdname=NULL, *dbase, *argdir;
 
+  debug_flg=FALSE;
+  
   hl->sdir=NULL;
   hl->wdir=NULL;
 
@@ -3407,7 +3410,7 @@ void get_option(int argc, char **argv, typHLOG *hl)
     }
     else if ((strcmp(argv[i_opt], "-d") == 0) ||
 	     (strcmp(argv[i_opt], "--debug") == 0)) {
-      hl->dbg_flag=TRUE;
+      debug_flg=TRUE;
       i_opt++;
     }
     else{
@@ -3511,7 +3514,7 @@ int main(int argc, char* argv[]){
 
   hl->fcdb_host=g_strdup(SMOKA_LOG_HOST);
   hl->fcdb_path=g_strdup(SMOKA_LOG_PATH);
-  hl->fcdb_file=g_strdup(SMOKA_LOG_FILE);
+  hl->fcdb_file=g_strdup_printf(SMOKA_LOG_FILE,getuid());
   hl->proxy_host=g_strdup(SEIMEI_PROXY_HOST);
   hl->proxy_port=SEIMEI_PROXY_PORT;
   hl->seimei_log_id=NULL;

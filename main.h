@@ -78,7 +78,7 @@
 
 #define SMOKA_LOG_HOST "www.o.kwasan.kyoto-u.ac.jp"
 #define SMOKA_LOG_PATH "/seimei_obs_log/add_comment.py"
-#define SMOKA_LOG_FILE "/tmp/grlog-www.txt"
+#define SMOKA_LOG_FILE "/tmp/grlog-www-%d.txt"
 #define SEIMEI_PROXY_HOST "192.168.1.52"
 #define SEIMEI_PROXY_PORT "3128"
 
@@ -488,7 +488,6 @@ struct _typHLOG{
   GtkWidget *scr_combo;
 
   gboolean upd_flag;
-  gboolean dbg_flag;
   gboolean date_flag;
   gint disp_flag;
   gint sort_flag;

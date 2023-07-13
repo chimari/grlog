@@ -48,11 +48,7 @@ static void cancel_http();
 static void thread_cancel_http();
 
 
-#ifdef POP_DEBUG
-gboolean debug_flg=TRUE;
-#else
-gboolean debug_flg=FALSE;
-#endif
+extern gboolean debug_flg;
 
 char *my_strcasestr(const char *str, const char *pattern) {
     size_t i;
@@ -1010,7 +1006,7 @@ int post_body_new(typHLOG *hl,
 	break;
 
       case POST_CONST:
-	if(strcmp(seimei_log_post[ip].key,"Submit_remarks")==0){
+	if(strcmp(seimei_log_post[ip].key,"submit_remarks")==0){
 	  sprintf(send_mesg,
 		  "%s=%s",
 		  seimei_log_post[ip].key,
