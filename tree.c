@@ -855,6 +855,8 @@ static void cell_canceled (GtkCellRendererText *cell)
 }
 
 void update_seimei_log(typHLOG *hl, gint i){
+  if(!hl->push_flag) return;
+  
   if(hl->seimei_log_id) g_free(hl->seimei_log_id);
   hl->seimei_log_id=g_strdup(hl->frame[i].id);
   

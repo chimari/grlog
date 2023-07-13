@@ -80,7 +80,7 @@
 #define SMOKA_LOG_PATH "/seimei_obs_log/add_comment.py"
 #define SMOKA_LOG_FILE "/tmp/grlog-www-%d.txt"
 #define SEIMEI_PROXY_HOST "192.168.1.52"
-#define SEIMEI_PROXY_PORT "3128"
+#define SEIMEI_PROXY_PORT 3128
 
 #define GRLOG_HTTP_ERROR_GETHOST  -1
 #define GRLOG_HTTP_ERROR_SOCKET   -2
@@ -454,6 +454,7 @@ struct _typHLOG{
   gchar *proxy_host;
   gint proxy_port;
   gboolean proxy_flag;
+  gboolean push_flag;
   glong psz;
 
   gchar *seimei_log_id;

@@ -742,7 +742,7 @@ int http_c_ssl(typHLOG *hl)
   sprintf(send_mesg, "GET %s HTTP/1.1\r\n", hl->http_path);
   write_to_SSLserver(ssl, send_mesg);
 
-  sprintf(send_mesg, "Accept: application/xml, application/json\r\n");
+  sprintf(send_mesg, "Accept: application/xml, application/json. */*\r\n");
   write_to_SSLserver(ssl, send_mesg);
 
   sprintf(send_mesg, "User-Agent: Mozilla/5.0\r\n");
@@ -1121,14 +1121,18 @@ int http_c_fcdb_new(typHLOG *hl, gboolean SSL_flag, gboolean proxy_ssl){
 			 &hints, &res)) !=0){
     fprintf(stderr, "Bad hostname [%s]\n",
 	    (hl->proxy_flag) ? hl->proxy_host : hl->fcdb_host);
+
     return(GRLOG_HTTP_ERROR_GETHOST);
   }
+
+  if(debug_flg) printf("!!! Proxy Host : %s\n",(hl->proxy_flag)?hl->proxy_host:hl->fcdb_host);
 
   check_msg_from_parent();
 
   if(hl->proxy_flag){
     addr_in = (struct sockaddr_in *)(res -> ai_addr);
     addr_in -> sin_port=htons(hl->proxy_port);
+    if(debug_flg) printf("!!! Proxy Port : %d\n",hl->proxy_port);
   }
 
   /* ソケット生成 */
@@ -1140,7 +1144,7 @@ int http_c_fcdb_new(typHLOG *hl, gboolean SSL_flag, gboolean proxy_ssl){
   check_msg_from_parent();
 
   /* サーバに接続 */
-  if( Connect(command_socket, res->ai_addr, res->ai_addrlen, 10) == -1){
+  if( Connect(command_socket, res->ai_addr, res->ai_addrlen, 100) == -1){
     fprintf(stderr, "Failed to connect to %s .\n", hl->fcdb_host);
     return(GRLOG_HTTP_ERROR_CONNECT);
   }
@@ -1232,7 +1236,7 @@ int http_c_fcdb_new(typHLOG *hl, gboolean SSL_flag, gboolean proxy_ssl){
 
   // Header
   {
-    sprintf(send_mesg, "Accept: application/xml, application/json\r\n");
+    sprintf(send_mesg, "Accept: */*\r\n");
     if(SSL_flag){  // HTTPS
       write_to_SSLserver(ssl, send_mesg);   
     }
@@ -1329,6 +1333,7 @@ int http_c_fcdb_new(typHLOG *hl, gboolean SSL_flag, gboolean proxy_ssl){
 	hl->psz=atol(cp);
       }
     }
+
     do{ // data read
       size = recv(command_socket,buf,BUF_LEN, 0);
       fwrite( &buf , size , 1 , fp_write ); 

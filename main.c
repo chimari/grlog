@@ -3302,11 +3302,14 @@ void usage(void)
 {
   g_print(" grlog : Seimei / GAOES-RV Obs-Log Editor   Ver"VERSION"\n");
   g_print("  [usage] %% grlog [-s shared_dir] [-w work_dir] [-l login.cl_dir] [-h] [-u] data_dir\n");
-  g_print("                shared_dir  : dir. where the ref frames and QL py scripts are located\n");
-  g_print("                                                  (def.: HOME$/IRAF/GAOES-RV_ql/)\n");
-  g_print("                work_dir    : working dir. for QL (def.: <data_dir>/ql/)\n");
-  g_print("                login.cl_dir: dir. where login.cl is located (def.: HOME$/)\n");
-  g_print("                data_dir    : dir. where RAW data (GRA????????.fits) are located\n");
+  g_print("  -u : Automatic Update for comming frames\n");
+  g_print("  -p : Push mode for comment update to Seimei Exposure Log\n");
+  g_print("  -d : Debug mode w/ Network logging\n\n");
+  g_print("  -s shared_dir   : dir. where ref frames and QL pys are located\n");
+  g_print("                                 (def.: HOME$/IRAF/GAOES-RV_ql/)\n");
+  g_print("  -w work_dir     : working dir. for QL (def.: <data_dir>/ql/)\n");
+  g_print("  -l login.cl_dir : dir. where login.cl is located (def.: HOME$/)\n");
+  g_print("     data_dir     : dir. where RAW data (GRA????????.fits) are located\n");
 
   exit(0);
 }
@@ -3321,6 +3324,8 @@ void get_option(int argc, char **argv, typHLOG *hl)
   
   hl->sdir=NULL;
   hl->wdir=NULL;
+
+  hl->push_flag=FALSE;
 
   if(argc<2){
     usage();
@@ -3411,6 +3416,11 @@ void get_option(int argc, char **argv, typHLOG *hl)
     else if ((strcmp(argv[i_opt], "-d") == 0) ||
 	     (strcmp(argv[i_opt], "--debug") == 0)) {
       debug_flg=TRUE;
+      i_opt++;
+    }
+    else if ((strcmp(argv[i_opt], "-p") == 0) ||
+	     (strcmp(argv[i_opt], "--push") == 0)) {
+      hl->push_flag=TRUE;
       i_opt++;
     }
     else{
