@@ -3,6 +3,7 @@
 #define BUFFSIZE 256
 
 gint flat_ow_check;
+extern gboolean debug_flg;
 
 gboolean check_ql(gpointer gdata){
   typHLOG *hl=(typHLOG *)gdata;
@@ -1301,6 +1302,10 @@ void iraf_obj(typHLOG *hl, gint i_sel, gint i_file){
 		      hl->ql_line,
 		      hl->ql_lock);
 
+  if(debug_flg){
+    fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
+  }
+
   hl->ql_i=i_sel;
   hl->ql_loop=QL_OBJECT;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
@@ -1327,6 +1332,10 @@ void iraf_obj_splot(typHLOG *hl, gint i_sel, gchar *spec_file){
 		      hl->ql_line,
 		      hl->ql_lock);
 
+  if(debug_flg){
+    fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
+  }
+  
   hl->ql_i=i_sel;
   hl->ql_loop=QL_SPLOT;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
@@ -1428,6 +1437,10 @@ void make_obj_batch(typHLOG *hl, gchar *obj_in){
 		      hl->ql_mask,
 		      hl->ql_lock);
 
+  if(debug_flg){
+    fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
+  }
+  
   hl->ql_loop=QL_OBJECT_BATCH;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
 			     (gpointer)hl);
@@ -1455,6 +1468,7 @@ void ql_obj_red(GtkWidget *w, gpointer gdata){
 		  "Another reduction process is still running.",
 		  " ",
 		  "Please close it before creating a new reduction session.",
+		  " ",
 		  NULL);
     return;
   }    
@@ -1501,6 +1515,7 @@ void ql_obj_red(GtkWidget *w, gpointer gdata){
 
 void iraf_flat(typHLOG *hl, gint i_sel, gint i_file, gchar *flat_in){
   gchar *tmp;
+  gchar *ap_bak, *src, *dest;
 
   if(strcmp(hl->frame[i_sel].type,"FLAT")!=0){
     popup_message(hl->w_top, 
@@ -1521,7 +1536,51 @@ void iraf_flat(typHLOG *hl, gint i_sel, gint i_file, gchar *flat_in){
   }
   if(!hl->ql_ap_new){
     hl->ql_ap_new=g_strdup_printf("Ap.%08d", i_file);
+
+    // Check Redo
+    if(strcmp(hl->ql_ap_new,hl->ql_ap)==0){
+      // Remove fits
+      src=g_strconcat(hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      hl->ql_ap,
+		      ".fits",
+		      NULL);
+      if(access(src, F_OK)==0){
+	unlink(src);
+      }
+      g_free(src);
+
+      // Remove ec.fits
+      src=g_strconcat(hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      hl->ql_ap,
+		      ".ec.fits",
+		      NULL);
+      if(access(src, F_OK)==0){
+	unlink(src);
+      }
+      g_free(src);
+
+      // Remove database
+      src=g_strconcat(hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      "database",
+		      G_DIR_SEPARATOR_S,
+		      "ap",
+		      hl->ql_ap,
+		      NULL);
+      if(access(src, F_OK)==0){
+	unlink(src);
+      }
+      g_free(src);
+
+      // Use default ap
+      g_free(hl->ql_ap);
+      hl->ql_ap=g_strdup(GAOES_AP);     
+    }
   }
+  
+  
   hl->frame[i_sel].cal=QLCAL_FLAT0;
   
   tmp=g_strdup_printf("echo %08d >> %s",
@@ -1660,6 +1719,10 @@ void make_flat(typHLOG *hl, gchar *flat_in){
 		      hl->ql_st_x,
 		      hl->ql_ed_x,
 		      hl->ql_lock);
+
+  if(debug_flg){
+    fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
+  }
 
   hl->ql_loop=QL_FLAT;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
@@ -1901,7 +1964,8 @@ void finish_blaze(typHLOG *hl){
 
 
 void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
-  gchar *tmp; 
+  gchar *tmp;
+  gchar *thar_bak, *src, *dest;
 
   if(strcmp(hl->frame[i_sel].type,"COMPARISON")!=0){
     popup_message(hl->w_top, 
@@ -1918,6 +1982,39 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
 
   if(hl->ql_thar_new) g_free(hl->ql_thar_new);
   hl->ql_thar_new=g_strdup_printf("ThAr.%08d", hl->frame[i_sel].idnum);
+
+  // Check Redo
+  if(strcmp(hl->ql_thar_new,hl->ql_thar1d)==0){
+    // Remove fits
+    src=g_strconcat(hl->wdir,
+		    G_DIR_SEPARATOR_S,
+		    hl->ql_thar1d,
+		    ".fits",
+		    NULL);
+    if(access(src, F_OK)==0){
+      unlink(src);
+    }
+    g_free(src);
+    
+    // Remove database
+    src=g_strconcat(hl->wdir,
+		    G_DIR_SEPARATOR_S,
+		    "database",
+		    G_DIR_SEPARATOR_S,
+		    "ec",
+		    hl->ql_thar1d,
+		    NULL);
+    if(access(src, F_OK)==0){
+      unlink(src);
+    }
+    g_free(src);
+    
+    // Use default ec
+    g_free(hl->ql_thar1d);
+    hl->ql_thar1d=g_strdup(GAOES_THAR1D);
+  }
+
+  
   hl->frame[i_sel].cal=QLCAL_COMP0;
 
   tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s \"%08d\" %s %s %s %s;rm -rf %s\'",
@@ -1935,6 +2032,10 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
 		      hl->ql_thar1d,
 		      hl->ql_lock);
 
+  if(debug_flg){
+    fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
+  }
+  
   hl->ql_loop=QL_THAR;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
 			     (gpointer)hl);
@@ -1989,6 +2090,10 @@ void iraf_mask(typHLOG *hl, gint i_sel, gint i_file){
 		      hl->ql_mask_new,
 		      hl->ql_lock);
 
+  if(debug_flg){
+    fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
+  }
+  
   hl->ql_loop=QL_MASK;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
 			     (gpointer)hl);
@@ -2056,6 +2161,10 @@ void iraf_blaze(typHLOG *hl, gint i_sel, gint i_file){
 		      hl->ql_mask,
 		      hl->ql_lock);
 
+  if(debug_flg){
+    fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
+  }
+  
   hl->ql_loop=QL_BLAZE;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
 			     (gpointer)hl);

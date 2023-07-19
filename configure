@@ -2499,9 +2499,9 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 PACKAGE=grlog
 
 MAJOR_VERSION=1
-MINOR_VERSION=2
+MINOR_VERSION=3
 MICRO_VERSION=0
-EXTRA_VERSION=-20230711
+EXTRA_VERSION=-20230719
 VERSION=$MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION$EXTRA_VERSION
 
 
@@ -5049,6 +5049,138 @@ rm -f core conftest.err conftest.$ac_objext conftest.beam \
      as_fn_error $? "glib-2.x is required" "$LINENO" 5
   fi
   rm -f conf.glibtest
+
+
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing XFree" >&5
+printf %s "checking for library containing XFree... " >&6; }
+if test ${ac_cv_search_XFree+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char XFree ();
+int
+main (void)
+{
+return XFree ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' X11
+do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_search_XFree=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext
+  if test ${ac_cv_search_XFree+y}
+then :
+  break
+fi
+done
+if test ${ac_cv_search_XFree+y}
+then :
+
+else $as_nop
+  ac_cv_search_XFree=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_XFree" >&5
+printf "%s\n" "$ac_cv_search_XFree" >&6; }
+ac_res=$ac_cv_search_XFree
+if test "$ac_res" != no
+then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else $as_nop
+
+  LDFLAGS="$LDFLAGS -L/usr/X11R6/lib -L/usr/X11R6/lib64"
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking \"Looking for XFree in /usr/X11R6\"" >&5
+printf %s "checking \"Looking for XFree in /usr/X11R6\"... " >&6; }
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing XFree" >&5
+printf %s "checking for library containing XFree... " >&6; }
+if test ${ac_cv_search_XFree+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_func_search_save_LIBS=$LIBS
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char XFree ();
+int
+main (void)
+{
+return XFree ();
+  ;
+  return 0;
+}
+_ACEOF
+for ac_lib in '' X11
+do
+  if test -z "$ac_lib"; then
+    ac_res="none required"
+  else
+    ac_res=-l$ac_lib
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+  fi
+  if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_search_XFree=$ac_res
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext
+  if test ${ac_cv_search_XFree+y}
+then :
+  break
+fi
+done
+if test ${ac_cv_search_XFree+y}
+then :
+
+else $as_nop
+  ac_cv_search_XFree=no
+fi
+rm conftest.$ac_ext
+LIBS=$ac_func_search_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_XFree" >&5
+printf "%s\n" "$ac_cv_search_XFree" >&6; }
+ac_res=$ac_cv_search_XFree
+if test "$ac_res" != no
+then :
+  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+
+else $as_nop
+
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+printf "%s\n" "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error -1 "\"Cannot find X11. Try setting LDFLAGS -L\"
+See \`config.log' for more details" "$LINENO" 5; }
+
+fi
+
+
+fi
 
 
 

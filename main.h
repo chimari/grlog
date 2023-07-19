@@ -5,6 +5,8 @@
 #include<gtk/gtk.h>
 #include <gio/gio.h>
 
+#include <X11/Xlib.h>
+
 #include <unistd.h>
 
 #include<stdio.h>
@@ -604,7 +606,6 @@ struct _typHLOG{
 
   GtkWidget *check_thar_red;
   GtkWidget *button_thar_red;
-  gchar *ql_thar;
   
   gchar *thar_red[NUM_SET];
   gboolean flag_thar_red[NUM_SET];

@@ -4,9 +4,9 @@ PACKAGE=grlog
 
 dnl version number
 MAJOR_VERSION=1
-MINOR_VERSION=2
+MINOR_VERSION=3
 MICRO_VERSION=0
-EXTRA_VERSION=-20230711
+EXTRA_VERSION=-20230719
 VERSION=$MAJOR_VERSION.$MINOR_VERSION.$MICRO_VERSION$EXTRA_VERSION
 
 dnl set $target
@@ -34,6 +34,15 @@ dnl             AC_MSG_ERROR(Cannot find GTK: Is gtk-config in path?))
 dnl else
 AM_PATH_GLIB_2_0(2.32.0,, AC_MSG_ERROR([glib-2.x is required]), gthread gobject)
 dnl fi
+
+dnl X11
+AC_SEARCH_LIBS([XFree], [X11], [], [
+  LDFLAGS="$LDFLAGS -L/usr/X11R6/lib -L/usr/X11R6/lib64"
+  AC_MSG_CHECKING(["Looking for XFree in /usr/X11R6"])
+  AC_SEARCH_LIBS([XFree], [X11], [], [
+    AC_MSG_FAILURE(["Cannot find X11. Try setting LDFLAGS -L"], [-1])
+  ])
+])
 
 dnl GTK 3 or 2 
 AC_ARG_WITH(gtk3,

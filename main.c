@@ -2394,8 +2394,45 @@ gint printdir(typHLOG *hl){
   return (0);
 }
 
-void do_quit (GtkWidget *widget)
+void do_quit (GtkWidget *widget, gpointer gdata)
 {
+  gboolean ret=FALSE;
+  typHLOG *hl;
+
+  hl=(typHLOG *)gdata;
+
+  if(hl->ql_timer>0){
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "PyRAF reduction process is still running.",
+		  " ",
+		  "Please close it before exiting grlog.",
+		  " ",
+		  NULL);
+    return;
+  }    
+
+  ret=popup_dialog(hl->w_top, 
+#ifdef USE_GTK3
+		   "dialog-question", 
+#else
+		   GTK_STOCK_DIALOG_QUESTION,
+#endif
+		   "<b>Save</b>:",
+		   " ",
+		   "Do you want to save the log file?",
+		   " ",
+		   NULL);
+
+  if(ret){
+    grlog_OpenFile(hl, SAVE_LOG);
+  }
+  
   gtk_main_quit();
 }
 
@@ -2405,6 +2442,7 @@ GtkWidget *make_menu(typHLOG *hl){
   GtkWidget *menu;
   GtkWidget *popup_button;
   GtkWidget *bar;
+  GtkWidget *check;
   GtkWidget *image;
   GdkPixbuf *pixbuf, *pixbuf2;
   gint w,h;
@@ -2495,7 +2533,7 @@ GtkWidget *make_menu(typHLOG *hl){
 #endif
   gtk_widget_show (popup_button);
   gtk_container_add (GTK_CONTAINER (menu), popup_button);
-  g_signal_connect (popup_button, "activate",G_CALLBACK(do_quit),NULL);
+  g_signal_connect (popup_button, "activate",G_CALLBACK(do_quit),(gpointer)hl);
 
   //// Config
 #ifdef USE_GTK3
@@ -2583,6 +2621,30 @@ GtkWidget *make_menu(typHLOG *hl){
   g_signal_connect (popup_button, "activate", 
 		    G_CALLBACK(splot_help), (gpointer)hl);
 
+  //// Mode
+#ifdef USE_GTK3
+  image=gtk_image_new_from_icon_name ("emblem-synchronizing", GTK_ICON_SIZE_MENU);
+  menu_item =gtkut_image_menu_item_new_with_label (image, "Mode");
+#else
+  image=gtk_image_new_from_stock (GTK_STOCK_ABOUT, GTK_ICON_SIZE_MENU);
+  menu_item =gtk_image_menu_item_new_with_label ("Mode");
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_item),image);
+#endif
+  gtk_widget_show (menu_item);
+  gtk_menu_shell_append(GTK_MENU_SHELL(menu_bar), menu_item);
+  
+  menu=gtk_menu_new();
+  gtk_widget_show (menu);
+  gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_item), menu);
+
+  //Mode/Push
+  check =gtk_check_menu_item_new_with_label ("Comment Push Mode");
+  gtk_widget_show (check);
+  gtk_container_add (GTK_CONTAINER (menu), check);
+  gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check),
+				   hl->push_flag);
+
+  
   //// Info
 #ifdef USE_GTK3
   image=gtk_image_new_from_icon_name ("user-info", GTK_ICON_SIZE_MENU);
@@ -3619,7 +3681,8 @@ int main(int argc, char* argv[]){
 			     G_DIR_SEPARATOR_S,
 			     NULL);
   
-  gtk_init(&argc, &argv);
+  XInitThreads();
+ gtk_init(&argc, &argv);
 
 #ifndef USE_GTK3
   gdk_color_alloc(gdk_colormap_get_system(),&color_red);
