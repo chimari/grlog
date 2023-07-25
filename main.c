@@ -1326,7 +1326,7 @@ int printfits(typHLOG *hl, char *inf){
       secz2=(gdouble)f_buf;
       hl->frame[hl->num].secz=(secz1+secz2)/2.;
            
-      fits_read_key_str(fptr, "Z_OBSMOD", i2, 0, &status);
+      fits_read_key_str(fptr, "G_OBSMOD", i2, 0, &status);
       hl->frame[hl->num].i2=g_strdup(i2);
                 
       //printf("%s %s %4.0fs (%s)\n",frame_id,jst,exptime, obj_name);
@@ -2459,8 +2459,10 @@ void push_all_comment (GtkWidget *widget, gpointer gdata)
 
   if(ret){
     for(i=0;i<hl->num;i++){
-      update_seimei_log(hl, i);
-      usleep(3e5);
+      if((hl->frame[i].note.txt)||(hl->frame[i].note.cnt>0)){
+	update_seimei_log(hl, i);
+	usleep(3e5);
+      }
     }
   }
 }
