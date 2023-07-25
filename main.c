@@ -2436,6 +2436,35 @@ void do_quit (GtkWidget *widget, gpointer gdata)
   gtk_main_quit();
 }
 
+
+void push_all_comment (GtkWidget *widget, gpointer gdata)
+{
+  gboolean ret=FALSE;
+  typHLOG *hl;
+  gint i;
+
+  hl=(typHLOG *)gdata;
+
+  ret=popup_dialog(hl->w_top, 
+#ifdef USE_GTK3
+		   "dialog-question", 
+#else
+		   GTK_STOCK_DIALOG_QUESTION,
+#endif
+		   "<b>Upload all comments</b>:",
+		   " ",
+		   		  "Do you want to upload all comments in the table to SMOKA database?",
+		   " ",
+		   NULL);
+
+  if(ret){
+    for(i=0;i<hl->num;i++){
+      update_seimei_log(hl, i);
+      usleep(3e5);
+    }
+  }
+}
+
 GtkWidget *make_menu(typHLOG *hl){
   GtkWidget *menu_bar;
   GtkWidget *menu_item;
@@ -2624,10 +2653,10 @@ GtkWidget *make_menu(typHLOG *hl){
   //// Mode
 #ifdef USE_GTK3
   image=gtk_image_new_from_icon_name ("emblem-synchronizing", GTK_ICON_SIZE_MENU);
-  menu_item =gtkut_image_menu_item_new_with_label (image, "Mode");
+  menu_item =gtkut_image_menu_item_new_with_label (image, "Comment");
 #else
   image=gtk_image_new_from_stock (GTK_STOCK_ABOUT, GTK_ICON_SIZE_MENU);
-  menu_item =gtk_image_menu_item_new_with_label ("Mode");
+  menu_item =gtk_image_menu_item_new_with_label ("Comment");
   gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(menu_item),image);
 #endif
   gtk_widget_show (menu_item);
@@ -2644,6 +2673,18 @@ GtkWidget *make_menu(typHLOG *hl){
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check),
 				   hl->push_flag);
 
+#ifdef USE_GTK3
+  image=gtk_image_new_from_icon_name ("go-up", GTK_ICON_SIZE_MENU);
+  popup_button =gtkut_image_menu_item_new_with_label (image, "Upload All Comments");
+#else
+  image=gtk_image_new_from_stock (GTK_STOCK_HELP, GTK_ICON_SIZE_MENU);
+  popup_button =gtk_image_menu_item_new_with_label ("Upload All Comments");
+  gtk_image_menu_item_set_image(GTK_IMAGE_MENU_ITEM(popup_button),image);
+#endif
+  gtk_widget_show (popup_button);
+  gtk_container_add (GTK_CONTAINER (menu), popup_button);
+  g_signal_connect (popup_button, "activate", 
+		    G_CALLBACK(push_all_comment), (gpointer)hl);
   
   //// Info
 #ifdef USE_GTK3
