@@ -863,11 +863,12 @@ void update_seimei_log(typHLOG *hl, gint i){
   if(hl->seimei_log_txt) g_free(hl->seimei_log_txt);
   if(hl->frame[i].note.txt){
     if(hl->frame[i].note.cnt>0){
-      hl->seimei_log_txt=g_strdup_printf("%s, %de- at order=%d x=%d",
+      hl->seimei_log_txt=g_strdup_printf("%s, %de- at order=%d x=[%d,%d]",
 					 hl->frame[i].note.txt,
 					 hl->frame[i].note.cnt,
 					 hl->ql_ge_line,
-					 (hl->ql_ge_stx+hl->ql_ge_edx)/2);
+					 hl->ql_ge_stx,
+					 hl->ql_ge_edx);
    }
     else{
       hl->seimei_log_txt=g_strdup(hl->frame[i].note.txt);
@@ -875,10 +876,11 @@ void update_seimei_log(typHLOG *hl, gint i){
   }
   else{
     if(hl->frame[i].note.cnt>0){
-      hl->seimei_log_txt=g_strdup_printf("%de- at order=%d x=%d",
+      hl->seimei_log_txt=g_strdup_printf("%de- at order=%d x=[%d,%d]",
 					 hl->frame[i].note.cnt,
 					 hl->ql_ge_line,
-					 (hl->ql_ge_stx+hl->ql_ge_edx)/2);
+					 hl->ql_ge_stx,
+					 hl->ql_ge_edx);
     }
     else{
       hl->seimei_log_txt=g_strdup(" ");
