@@ -2433,6 +2433,10 @@ void do_quit (GtkWidget *widget, gpointer gdata)
     grlog_OpenFile(hl, SAVE_LOG);
   }
   
+  if((hl->upd_flag)&&(hl->push_flag)){
+    push_all_comment (NULL, (gpointer)hl);
+  }
+  
   gtk_main_quit();
 }
 
