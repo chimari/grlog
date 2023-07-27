@@ -31,6 +31,7 @@ gboolean check_ql(gpointer gdata){
       finish_obj(hl);
       check_reduced_spectra(hl);
       tree_update_frame(hl);
+      update_seimei_log(hl, hl->ql_i-1);
       //frame_tree_update_ql(hl, hl->ql_i-1);
       //move_focus_item(hl, hl->ql_i-1);
       break;
