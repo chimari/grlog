@@ -770,6 +770,7 @@ void load_cfg_cal (typHLOG *hl)
   gchar *ms_fits, *ms_fits0, *bz_fits, *bz_fits0;
   gboolean ret=FALSE;
   gchar *tmp;
+  gint ac_fits, ac_fits2, ac_db;
   
   filename=g_strdup_printf("%s%s.grlog_conf",
 			   g_get_home_dir(),G_DIR_SEPARATOR_S);
@@ -781,8 +782,6 @@ void load_cfg_cal (typHLOG *hl)
       
       sdir=g_strdup(c_buf);
     }
-
-    
 
     if((sdir)&&(strcmp(hl->wdir,sdir)!=0)){
       if(hl->upd_flag){
@@ -809,6 +808,8 @@ void load_cfg_cal (typHLOG *hl)
     }
     
     if(ret){
+      ac_fits=1;
+      ac_db=1;
       if(xmms_cfg_read_string(cfgfile, "LastCAL",
 			      "Ap",&c_buf)){
 	// Ap
@@ -823,9 +824,12 @@ void load_cfg_cal (typHLOG *hl)
 			       c_buf,
 			       ".fits",
 			       NULL);
-	  copy_file(ap_fits0, ap_fits);
+	  if(access(ap_fits0, F_OK)==0){
+	    copy_file(ap_fits0, ap_fits);
+	  }
 	  g_free(ap_fits0);
 	}
+	ac_fits=access(ap_fits, F_OK);
 	g_free(ap_fits);
 	
 	// Ap database
@@ -845,14 +849,19 @@ void load_cfg_cal (typHLOG *hl)
 			     c_buf,
 			     NULL);
 	  copy_file(ap_db0, ap_db);
-	  if(hl->ql_ap) g_free(hl->ql_ap);
-	  hl->ql_ap=g_strdup(c_buf);
 	  g_free(ap_db0);
 	}
+	ac_db=access(ap_db, F_OK);
 	g_free(ap_db);
+
+	if((ac_fits==0)&&(ac_db==0)){
+	  if(hl->ql_ap) g_free(hl->ql_ap);
+	  hl->ql_ap=g_strdup(c_buf);
+	}
       }
 
       
+      ac_fits=1;
       if(xmms_cfg_read_string(cfgfile, "LastCAL",
 			      "Flat",&c_buf)){
 	// Flat
@@ -868,13 +877,20 @@ void load_cfg_cal (typHLOG *hl)
 			       ".fits",
 			       NULL);
 	  copy_file(fl_fits0, fl_fits);
-	  if(hl->ql_flat) g_free(hl->ql_flat);
-	  hl->ql_flat=g_strdup(c_buf);
 	  g_free(fl_fits0);
 	}
+	ac_fits=access(fl_fits, F_OK);
 	g_free(fl_fits);
+
+	if(ac_fits==0){
+	  if(hl->ql_flat) g_free(hl->ql_flat);
+	  hl->ql_flat=g_strdup(c_buf);
+	}
       }
       
+      ac_fits=1;
+      ac_db=1;
+      ac_fits2=1;
       if(xmms_cfg_read_string(cfgfile, "LastCAL",
 			      "ThAr1D",&c_buf)){
 	// ThAr 1D
@@ -893,6 +909,7 @@ void load_cfg_cal (typHLOG *hl)
 	  g_free(ec_fits0);
 	}
 	g_free(ec_fits);
+	ac_fits=access(ec_fits, F_OK);
 	
 	// ThAr 1D datavase
 	ec_db=g_strconcat(hl->wdir,
@@ -911,11 +928,10 @@ void load_cfg_cal (typHLOG *hl)
 			     c_buf,
 			     NULL);
 	  copy_file(ec_db0, ec_db);
-	  if(hl->ql_thar1d) g_free(hl->ql_thar1d);
-	  hl->ql_thar1d=g_strdup(c_buf);
 	  g_free(ec_db0);
 	}
 	g_free(ec_db);
+	ac_db=access(ec_db, F_OK);
       }
 
       if(xmms_cfg_read_string(cfgfile, "LastCAL",
@@ -933,13 +949,21 @@ void load_cfg_cal (typHLOG *hl)
 				".fits",
 				NULL);
 	  copy_file(ec2_fits0, ec2_fits);
-	  if(hl->ql_thar2d) g_free(hl->ql_thar2d);
-	  hl->ql_thar2d=g_strdup(c_buf);
 	  g_free(ec2_fits0);
 	}
+	ac_fits2=access(ec2_fits, F_OK);
 	g_free(ec2_fits);
       }
 
+      if((ac_fits==0)&&(ac_db==0)&&(ac_fits2==0)){
+	if(hl->ql_thar1d) g_free(hl->ql_thar1d);
+	hl->ql_thar1d=g_strdup(c_buf);
+	if(hl->ql_thar2d) g_free(hl->ql_thar2d);
+	hl->ql_thar2d=g_strdup(c_buf);
+      }
+
+      
+      ac_fits=1;
       if(xmms_cfg_read_string(cfgfile, "LastCAL",
 			      "Mask",&c_buf)){
 	// Mask
@@ -955,13 +979,17 @@ void load_cfg_cal (typHLOG *hl)
 			       ".fits",
 			       NULL);
 	  copy_file(ms_fits0, ms_fits);
-	  if(hl->ql_mask) g_free(hl->ql_mask);
-	  hl->ql_mask=g_strdup(c_buf);
 	  g_free(ms_fits0);
 	}
+	ac_fits=access(ms_fits, F_OK);
 	g_free(ms_fits);
+	if(ac_fits==0){
+	  if(hl->ql_mask) g_free(hl->ql_mask);
+	  hl->ql_mask=g_strdup(c_buf);
+	}
       }      
 
+      ac_fits=1;
       if(xmms_cfg_read_string(cfgfile, "LastCAL",
 			      "Blaze",&c_buf)){
 	// Blaze
@@ -977,11 +1005,14 @@ void load_cfg_cal (typHLOG *hl)
 			       ".fits",
 			       NULL);
 	  copy_file(bz_fits0, bz_fits);
-	  if(hl->ql_blaze) g_free(hl->ql_blaze);
-	  hl->ql_blaze=g_strdup(c_buf);
 	  g_free(bz_fits0);
 	}
+	ac_fits=access(bz_fits, F_OK);
 	g_free(bz_fits);
+	if(ac_fits==0){
+	  if(hl->ql_blaze) g_free(hl->ql_blaze);
+	  hl->ql_blaze=g_strdup(c_buf);
+	}
       }      
     }
 
