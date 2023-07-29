@@ -691,6 +691,44 @@ static void load_note (typHLOG *hl,gboolean force_fl)
 }
 
 
+void save_cfg_cal (typHLOG *hl)
+{
+  ConfigFile *cfgfile;
+  gchar *filename;
+  gchar *src;
+
+  filename=g_strdup_printf("%s%s.grlog_conf",
+			   g_get_home_dir(),G_DIR_SEPARATOR_S);
+  cfgfile = xmms_cfg_open_file(filename);
+  if (!cfgfile)  cfgfile = xmms_cfg_new();
+
+  xmms_cfg_write_string(cfgfile, "LastCAL",
+			"Dir",hl->wdir);
+  
+  xmms_cfg_write_string(cfgfile, "LastCAL",
+			"Ap", hl->ql_ap);
+  
+  xmms_cfg_write_string(cfgfile, "LastCAL",
+			"Flat",hl->ql_flat);
+
+  xmms_cfg_write_string(cfgfile, "LastCAL",
+			"ThAr2D",hl->ql_thar2d);
+  
+  xmms_cfg_write_string(cfgfile, "LastCAL",
+			"ThAr1D",hl->ql_thar1d);
+  
+  xmms_cfg_write_string(cfgfile, "LastCAL",
+			"Mask",hl->ql_mask);
+
+  xmms_cfg_write_string(cfgfile, "LastCAL",
+			"Blaze",hl->ql_blaze);
+
+  xmms_cfg_write_file(cfgfile, filename);
+  xmms_cfg_free(cfgfile);
+  g_free(filename);
+}
+
+
 void save_cfg (typHLOG *hl)
 {
   ConfigFile *cfgfile;
@@ -717,6 +755,241 @@ void save_cfg (typHLOG *hl)
   xmms_cfg_free(cfgfile);
   g_free(filename);
 }
+
+
+void load_cfg_cal (typHLOG *hl)
+{
+  ConfigFile *cfgfile;
+  gchar *filename;
+  gchar *c_buf;
+  gchar *sdir=NULL;
+  gchar *src;
+  gchar *ap_fits0, *ec_fits0, *ap_db0, *ec_db0;
+  gchar *ap_fits, *ec_fits, *ap_db, *ec_db;
+  gchar *fl_fits0, *fl_fits, *ec2_fits0, *ec2_fits;
+  gchar *ms_fits, *ms_fits0, *bz_fits, *bz_fits0;
+  gboolean ret=FALSE;
+  gchar *tmp;
+  
+  filename=g_strdup_printf("%s%s.grlog_conf",
+			   g_get_home_dir(),G_DIR_SEPARATOR_S);
+
+  cfgfile = xmms_cfg_open_file(filename);
+  if (cfgfile) {
+    if(xmms_cfg_read_string(cfgfile, "LastCAL",
+			    "Dir",&c_buf)){
+      
+      sdir=g_strdup(c_buf);
+    }
+
+    
+
+    if((sdir)&&(strcmp(hl->wdir,sdir)!=0)){
+      if(hl->upd_flag){
+	ret=TRUE;
+      }
+      else{
+	tmp=g_strdup_printf("      %s",sdir);
+	ret=popup_dialog(hl->w_top, 
+#ifdef USE_GTK3
+			 "dialog-question", 
+#else
+			 GTK_STOCK_DIALOG_QUESTION,
+#endif
+			 "<b>Load Last CAL frames</b>:",
+			 " ",
+			 "Do you want to <b>copy the last CAL frames</b> in",
+			 " ",
+			 tmp,
+			 " ",
+			 "into your work directory?",
+			 NULL);
+	g_free(tmp);
+      }
+    }
+    
+    if(ret){
+      if(xmms_cfg_read_string(cfgfile, "LastCAL",
+			      "Ap",&c_buf)){
+	// Ap
+	ap_fits=g_strconcat(hl->wdir,
+			    G_DIR_SEPARATOR_S,
+			    c_buf,
+			    ".fits",
+			    NULL);
+	if(access(ap_fits, F_OK)!=0){
+	  ap_fits0=g_strconcat(sdir,
+			       G_DIR_SEPARATOR_S,
+			       c_buf,
+			       ".fits",
+			       NULL);
+	  copy_file(ap_fits0, ap_fits);
+	  g_free(ap_fits0);
+	}
+	g_free(ap_fits);
+	
+	// Ap database
+	ap_db=g_strconcat(hl->wdir,
+			  G_DIR_SEPARATOR_S,
+			  "database",
+			  G_DIR_SEPARATOR_S,
+			  "ap",
+			  c_buf,
+			  NULL);
+	if(access(ap_db, F_OK)!=0){
+	  ap_db0=g_strconcat(sdir,
+			     G_DIR_SEPARATOR_S,
+			     "database",
+			     G_DIR_SEPARATOR_S,
+			     "ap",
+			     c_buf,
+			     NULL);
+	  copy_file(ap_db0, ap_db);
+	  if(hl->ql_ap) g_free(hl->ql_ap);
+	  hl->ql_ap=g_strdup(c_buf);
+	  g_free(ap_db0);
+	}
+	g_free(ap_db);
+      }
+
+      
+      if(xmms_cfg_read_string(cfgfile, "LastCAL",
+			      "Flat",&c_buf)){
+	// Flat
+	fl_fits=g_strconcat(hl->wdir,
+			    G_DIR_SEPARATOR_S,
+			    c_buf,
+			    ".fits",
+			    NULL);
+	if(access(fl_fits, F_OK)!=0){
+	  fl_fits0=g_strconcat(sdir,
+			       G_DIR_SEPARATOR_S,
+			       c_buf,
+			       ".fits",
+			       NULL);
+	  copy_file(fl_fits0, fl_fits);
+	  if(hl->ql_flat) g_free(hl->ql_flat);
+	  hl->ql_flat=g_strdup(c_buf);
+	  g_free(fl_fits0);
+	}
+	g_free(fl_fits);
+      }
+      
+      if(xmms_cfg_read_string(cfgfile, "LastCAL",
+			      "ThAr1D",&c_buf)){
+	// ThAr 1D
+	ec_fits=g_strconcat(hl->wdir,
+			    G_DIR_SEPARATOR_S,
+			    c_buf,
+			    ".fits",
+			    NULL);
+	if(access(ec_fits, F_OK)!=0){
+	  ec_fits0=g_strconcat(sdir,
+			       G_DIR_SEPARATOR_S,
+			       c_buf,
+			       ".fits",
+			       NULL);
+	  copy_file(ec_fits0, ec_fits);
+	  g_free(ec_fits0);
+	}
+	g_free(ec_fits);
+	
+	// ThAr 1D datavase
+	ec_db=g_strconcat(hl->wdir,
+			  G_DIR_SEPARATOR_S,
+			  "database",
+			  G_DIR_SEPARATOR_S,
+			  "ec",
+			  c_buf,
+			  NULL);
+	if(access(ec_db, F_OK)!=0){
+	  ec_db0=g_strconcat(sdir,
+			     G_DIR_SEPARATOR_S,
+			     "database",
+			     G_DIR_SEPARATOR_S,
+			     "ec",
+			     c_buf,
+			     NULL);
+	  copy_file(ec_db0, ec_db);
+	  if(hl->ql_thar1d) g_free(hl->ql_thar1d);
+	  hl->ql_thar1d=g_strdup(c_buf);
+	  g_free(ec_db0);
+	}
+	g_free(ec_db);
+      }
+
+      if(xmms_cfg_read_string(cfgfile, "LastCAL",
+			      "ThAr2D",&c_buf)){
+	// ThAr 2D
+	ec2_fits=g_strconcat(hl->wdir,
+			     G_DIR_SEPARATOR_S,
+			     c_buf,
+			     ".fits",
+			     NULL);
+	if(access(ec2_fits, F_OK)!=0){
+	  ec2_fits0=g_strconcat(sdir,
+				G_DIR_SEPARATOR_S,
+				c_buf,
+				".fits",
+				NULL);
+	  copy_file(ec2_fits0, ec2_fits);
+	  if(hl->ql_thar2d) g_free(hl->ql_thar2d);
+	  hl->ql_thar2d=g_strdup(c_buf);
+	  g_free(ec2_fits0);
+	}
+	g_free(ec2_fits);
+      }
+
+      if(xmms_cfg_read_string(cfgfile, "LastCAL",
+			      "Mask",&c_buf)){
+	// Mask
+	ms_fits=g_strconcat(hl->wdir,
+			    G_DIR_SEPARATOR_S,
+			    c_buf,
+			    ".fits",
+			    NULL);
+	if(access(ms_fits, F_OK)!=0){
+	  ms_fits0=g_strconcat(sdir,
+			       G_DIR_SEPARATOR_S,
+			       c_buf,
+			       ".fits",
+			       NULL);
+	  copy_file(ms_fits0, ms_fits);
+	  if(hl->ql_mask) g_free(hl->ql_mask);
+	  hl->ql_mask=g_strdup(c_buf);
+	  g_free(ms_fits0);
+	}
+	g_free(ms_fits);
+      }      
+
+      if(xmms_cfg_read_string(cfgfile, "LastCAL",
+			      "Blaze",&c_buf)){
+	// Blaze
+	bz_fits=g_strconcat(hl->wdir,
+			    G_DIR_SEPARATOR_S,
+			    c_buf,
+			    ".fits",
+			    NULL);
+	if(access(bz_fits, F_OK)!=0){
+	  bz_fits0=g_strconcat(hl->sdir,
+			       G_DIR_SEPARATOR_S,
+			       c_buf,
+			       ".fits",
+			       NULL);
+	  copy_file(bz_fits0, bz_fits);
+	  if(hl->ql_blaze) g_free(hl->ql_blaze);
+	  hl->ql_blaze=g_strdup(c_buf);
+	  g_free(bz_fits0);
+	}
+	g_free(bz_fits);
+      }      
+    }
+
+    xmms_cfg_free(cfgfile);
+  }
+  g_free(filename);
+}
+
 
 static void load_cfg (typHLOG *hl)
 {
@@ -3729,7 +4002,7 @@ int main(int argc, char* argv[]){
 			     NULL);
   
   XInitThreads();
- gtk_init(&argc, &argv);
+  gtk_init(&argc, &argv);
 
 #ifndef USE_GTK3
   gdk_color_alloc(gdk_colormap_get_system(),&color_red);
@@ -3747,6 +4020,7 @@ int main(int argc, char* argv[]){
     hl->proxy_flag=TRUE;
     check_reference_data(hl);
     prepare_pyraf(hl);
+    load_cfg_cal(hl);
     
     hl->timer=g_timeout_add(CHECK_INTERVAL, 
 			    (GSourceFunc)check_scan, 
@@ -3757,6 +4031,7 @@ int main(int argc, char* argv[]){
     do_dir(NULL,(gpointer)hl);
     check_reference_data(hl);
     prepare_pyraf(hl);
+    load_cfg_cal(hl);
     
     usleep(1e6);
     start_scan_command((gpointer)hl);

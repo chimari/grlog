@@ -31,9 +31,7 @@ gboolean check_ql(gpointer gdata){
       finish_obj(hl);
       check_reduced_spectra(hl);
       tree_update_frame(hl);
-      update_seimei_log(hl, hl->ql_i-1);
-      //frame_tree_update_ql(hl, hl->ql_i-1);
-      //move_focus_item(hl, hl->ql_i-1);
+      update_seimei_log(hl, hl->ql_i);
       break;
     case QL_SPLOT:
       break;
@@ -2496,27 +2494,27 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
     switch(mode){
     case OPEN_AP:
       my_file_chooser_add_filter(fdialog,"Aperture Reference File",
-				 "Ap.*.fits",NULL);
+				 "Ap*.fits",NULL);
       break;
       
     case OPEN_FLAT:
       my_file_chooser_add_filter(fdialog,"Normalized Flat Image File",
-				 "Flat.*.sc.nm.fits",NULL);
+				 "Flat*.sc.nm.fits",NULL);
       break;
       
     case OPEN_THAR:
       my_file_chooser_add_filter(fdialog,"1D Wavelength Reference File",
-				 "ThAr.*.center.fits",NULL);
+				 "ThAr*.center.fits",NULL);
       break;
       
     case OPEN_MASK:
       my_file_chooser_add_filter(fdialog,"Mask File",
-				 "Mask.*.fits",NULL);
+				 "Mask*.fits",NULL);
       break;
       
     case OPEN_BLAZE:
       my_file_chooser_add_filter(fdialog,"Blaze Function File",
-				 "cBlaze.*.fits",NULL);
+				 "cBlaze*.fits",NULL);
       break;
       
     case OPEN_LOG:
@@ -2539,6 +2537,8 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
     gchar *db_file, *tmp;
     gchar *dest_file, *fits_file;
     gchar *cpp, *basename0, *basename1, *thar_2d;
+    gchar *tgt_dir=NULL;
+    gchar *cp_dest;
     
     fname = g_strdup(gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(fdialog)));
     gtk_widget_destroy(fdialog);
@@ -2548,16 +2548,34 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
     if(access(dest_file,F_OK)==0){
       if(*tgt_file) g_free(*tgt_file);
       *tgt_file=g_strdup(dest_file);
+      tgt_dir=g_path_get_dirname(*tgt_file);
 
       switch(mode){
       case OPEN_AP:
 	basename0=get_refname(*tgt_file);
 	db_file=g_strdup_printf("%s%sdatabase%sap%s",
-				hl->wdir,
+				tgt_dir,
 				G_DIR_SEPARATOR_S,
 				G_DIR_SEPARATOR_S,
 				basename0);
+	
 	if(access(db_file, F_OK)==0){
+	  if(strcmp(hl->wdir,tgt_dir)!=0){ // Different dir COPY!
+	    cp_dest=g_strdup_printf("%s%s%s",
+				    hl->wdir,
+				    G_DIR_SEPARATOR_S,
+				    g_path_get_basename(*tgt_file));
+	    copy_file(*tgt_file,cp_dest);
+	    g_free(cp_dest);
+	    cp_dest=g_strdup_printf("%s%sdatabase%sap%s",
+				    hl->wdir,
+				    G_DIR_SEPARATOR_S,
+				    G_DIR_SEPARATOR_S,
+				    basename0);
+	    copy_file(db_file,cp_dest);
+	    g_free(cp_dest);
+	  }
+	  
 	  if(hl->ql_ap) g_free(hl->ql_ap);
 	  hl->ql_ap=g_strdup(basename0);
 	  set_ap_label(hl);
@@ -2580,6 +2598,15 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
 	break;
 
       case OPEN_FLAT:
+	if(strcmp(hl->wdir,tgt_dir)!=0){ // Different dir COPY!
+	  cp_dest=g_strdup_printf("%s%s%s",
+				  hl->wdir,
+				  G_DIR_SEPARATOR_S,
+				  g_path_get_basename(*tgt_file));
+	  copy_file(*tgt_file,cp_dest);
+	  g_free(cp_dest);
+	}
+	
 	if(hl->ql_flat) g_free(hl->ql_flat);
 	hl->ql_flat=get_refname(*tgt_file);
 	set_flat_label(hl);
@@ -2589,15 +2616,37 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
 	basename0=get_refname(*tgt_file);
 	basename1=get_refname(basename0);
 	thar_2d=g_strdup_printf("%s%s%s.fits",
-				hl->wdir,
+				tgt_dir,
 				G_DIR_SEPARATOR_S,
 				basename1);
 	db_file=g_strdup_printf("%s%sdatabase%sec%s",
-				hl->wdir,
+				tgt_dir,
 				G_DIR_SEPARATOR_S,
 				G_DIR_SEPARATOR_S,
 				basename0);
 	if((access(db_file, F_OK)==0)&&(access(thar_2d, F_OK)==0)){
+	  if(strcmp(hl->wdir,tgt_dir)!=0){ // Different dir COPY!
+	    cp_dest=g_strdup_printf("%s%s%s",
+				    hl->wdir,
+				    G_DIR_SEPARATOR_S,
+				    g_path_get_basename(*tgt_file));
+	    copy_file(*tgt_file,cp_dest);
+	    g_free(cp_dest);
+	    cp_dest=g_strdup_printf("%s%s%s.fits",
+				    hl->wdir,
+				    G_DIR_SEPARATOR_S,
+				    basename1);
+	    copy_file(thar_2d,cp_dest);
+	    g_free(cp_dest);
+	    cp_dest=g_strdup_printf("%s%sdatabase%sec%s",
+				    hl->wdir,
+				    G_DIR_SEPARATOR_S,
+				    G_DIR_SEPARATOR_S,
+				    basename0);
+	    copy_file(db_file,cp_dest);
+	    g_free(cp_dest);
+	  }
+	  
 	  if(hl->ql_thar1d) g_free(hl->ql_thar1d);
 	  hl->ql_thar1d=g_strdup(basename0);
 	  if(hl->ql_thar2d) g_free(hl->ql_thar2d);
@@ -2624,12 +2673,30 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
 	break;
 
       case OPEN_MASK:
+	if(strcmp(hl->wdir,tgt_dir)!=0){ // Different dir COPY!
+	  cp_dest=g_strdup_printf("%s%s%s",
+				  hl->wdir,
+				  G_DIR_SEPARATOR_S,
+				  g_path_get_basename(*tgt_file));
+	  copy_file(*tgt_file,cp_dest);
+	  g_free(cp_dest);
+	}
+	
 	if(hl->ql_mask) g_free(hl->ql_mask);
 	hl->ql_mask=get_refname(*tgt_file);
 	set_mask_label(hl);
 	break;
 
       case OPEN_BLAZE:
+	if(strcmp(hl->wdir,tgt_dir)!=0){ // Different dir COPY!
+	  cp_dest=g_strdup_printf("%s%s%s",
+				  hl->wdir,
+				  G_DIR_SEPARATOR_S,
+				  g_path_get_basename(*tgt_file));
+	  copy_file(*tgt_file,cp_dest);
+	  g_free(cp_dest);
+	}
+
 	if(hl->ql_blaze) g_free(hl->ql_blaze);
 	hl->ql_blaze=get_refname(*tgt_file);
 	set_blaze_label(hl);
@@ -2658,6 +2725,7 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
 
 	    fclose(fp);
 	  }
+	  save_cfg_cal(hl);
 	}
 	break;
       }
@@ -2672,6 +2740,7 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
 
 	    fclose(fp);
 	  }
+	  save_cfg_cal(hl);
       }
       else{
 	popup_message(hl->w_top, 
@@ -2687,6 +2756,8 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
 		      NULL);
       }
     }
+
+    if(tgt_dir) g_free(tgt_dir);
     
     g_free(dest_file);
     g_free(fname);
