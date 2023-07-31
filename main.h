@@ -631,7 +631,7 @@ struct _typHLOG{
 
 
 void check_reduced_spectra();
-void copy_file();
+int copy_file();
 
 gchar* to_utf8();
 gchar* to_locale();

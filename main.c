@@ -94,7 +94,7 @@ void check_reduced_spectra(typHLOG *hl){
   }
 }
 
-void copy_file(gchar *src, gchar *dest)
+int copy_file(gchar *src, gchar *dest)
 {
   FILE *src_fp, *dest_fp;
   gchar *buf;
@@ -107,12 +107,12 @@ void copy_file(gchar *src, gchar *dest)
 
   if ((src_fp = fopen(src, "rb")) == NULL) {
     g_print("Cannot open copy source file %s",src);
-    exit(1);
+    return(-1);
   }
 
   if ((dest_fp = fopen(dest, "wb")) == NULL) {
     g_print("Cannot open copy destination file %s",dest);
-    exit(1);
+    return(-1);
   }
 
   g_print("Copying \"%s\" --> \"%s\" ...\n", src,dest);
@@ -128,6 +128,8 @@ void copy_file(gchar *src, gchar *dest)
 #endif
 
   g_free(buf);
+  
+  return(0);
 }
 
 
@@ -770,7 +772,6 @@ void load_cfg_cal (typHLOG *hl)
   gchar *ms_fits, *ms_fits0, *bz_fits, *bz_fits0;
   gboolean ret=FALSE, cp_flag=FALSE;;
   gchar *tmp;
-  
   gint ac_fits, ac_fits2, ac_db;
   
   filename=g_strdup_printf("%s%s.grlog_conf",
@@ -890,7 +891,7 @@ void load_cfg_cal (typHLOG *hl)
       }
       ac_fits=access(fl_fits, F_OK);
       g_free(fl_fits);
-	
+
       if(ac_fits==0){
 	if(hl->ql_flat) g_free(hl->ql_flat);
 	hl->ql_flat=g_strdup(c_buf);
@@ -1017,7 +1018,7 @@ void load_cfg_cal (typHLOG *hl)
 			  NULL);
       if(cp_flag){
 	if(access(bz_fits, F_OK)!=0){
-	  bz_fits0=g_strconcat(hl->sdir,
+	  bz_fits0=g_strconcat(sdir,
 			       G_DIR_SEPARATOR_S,
 			       c_buf,
 			       ".fits",
