@@ -3,7 +3,7 @@
 #                         Document file                                  #
 #                                                                        # 
 #                                                                        # 
-#                                  ver 1.3.1 2023/07/29                 
+#                                  ver 1.4.0 2023/08/02                  #
 #                               Copyright (C) 2023 Akito Tajitsu         #
 #      Subaru Telescope, National Astronomical Observatory of Japan      #
 #                                        akito.tajitsu_at_nao.ac.jp      # 
@@ -47,7 +47,16 @@ Then, an executable file "hdslog" should be built.
 You can copy this file to other directory as you like.
 
 ## How to Run
-  - % grlog <your-data-dir.>
+  % grlog [-s shared_dir] [-w work_dir] [-l login.cl_dir] [-h] [-u] data_dir
+  -u : Automatic Update for comming frames
+  -p : Push mode for comment update to Seimei Exposure Log
+  -d : Debug mode w/ Network logging
+
+  -s shared_dir   : dir. where ref frames and QL pys are located
+                                 (def.: HOME$/IRAF/GAOES-RV_ql/)
+  -w work_dir     : working dir. for QL (def.: <data_dir>/ql/)
+  -l login.cl_dir : dir. where login.cl is located (def.: HOME$/)
+     data_dir     : dir. where RAW data (GRA????????.fits) are located
 
 
 ## Lock File

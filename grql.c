@@ -5,6 +5,35 @@
 gint flat_ow_check;
 extern gboolean debug_flg;
 
+void check_ql_finish(typHLOG *hl){
+  switch(hl->ql_loop){
+  case QL_THAR:
+    finish_thar(hl);
+    tree_update_frame(hl);
+    break;
+  case QL_FLAT:
+    finish_flat(hl);
+    tree_update_frame(hl);
+    break;
+  case QL_OBJECT:
+  case QL_OBJECT_BATCH:
+    finish_obj(hl);
+    check_reduced_spectra(hl);
+    tree_update_frame(hl);
+    update_seimei_log(hl, hl->ql_i);
+    break;
+  case QL_SPLOT:
+    break;
+  case QL_MASK:
+    finish_mask(hl);
+    break;
+  case QL_BLAZE:
+    finish_blaze(hl);
+    break;
+  } 
+}
+
+
 gboolean check_ql(gpointer gdata){
   typHLOG *hl=(typHLOG *)gdata;
 
@@ -17,31 +46,7 @@ gboolean check_ql(gpointer gdata){
     return(TRUE);
   }
   else{
-    switch(hl->ql_loop){
-    case QL_THAR:
-      finish_thar(hl);
-      tree_update_frame(hl);
-      break;
-    case QL_FLAT:
-      finish_flat(hl);
-      tree_update_frame(hl);
-      break;
-    case QL_OBJECT:
-    case QL_OBJECT_BATCH:
-      finish_obj(hl);
-      check_reduced_spectra(hl);
-      tree_update_frame(hl);
-      update_seimei_log(hl, hl->ql_i);
-      break;
-    case QL_SPLOT:
-      break;
-    case QL_MASK:
-      finish_mask(hl);
-      break;
-    case QL_BLAZE:
-      finish_blaze(hl);
-      break;
-    }
+    check_ql_finish(hl);
     
     hl->ql_timer=-1;
     return(FALSE);
@@ -49,6 +54,7 @@ gboolean check_ql(gpointer gdata){
     return(FALSE);
   }
 }
+
 
 void check_db_dir(gchar *wdir){
   gchar *db_dir, *com;
@@ -66,104 +72,6 @@ void check_db_dir(gchar *wdir){
   
   g_free(db_dir);
 }
-
-void db_check(typHLOG *hl, gint cal){
-  gboolean ret=FALSE;
-  gchar *fp_cal, *fp_db, *w_db;
-
-  // CAL file check
-  switch(cal){
-  case CAL_AP:
-    fp_cal=g_strconcat(hl->wdir,
-		       G_DIR_SEPARATOR_S,
-		       hl->ap_red[hl->iraf_hdsql_r],
-		       ".fits",
-		       NULL);
-    break;
-
-  case CAL_THAR:
-    fp_cal=g_strconcat(hl->wdir,
-		       G_DIR_SEPARATOR_S,
-		       hl->thar_red[hl->iraf_hdsql_r],
-		       ".fits",
-		       NULL);
-    break;
-
-  case CAL_FLAT:
-    fp_cal=g_strconcat(hl->wdir,
-		       G_DIR_SEPARATOR_S,
-		       hl->thar_red[hl->iraf_hdsql_r],
-		       ".fits",
-		       NULL);
-    break;
-  }
-
-  if(access(fp_cal, F_OK)==0){
-    switch(cal){
-    case CAL_AP:
-      fp_db=g_strconcat(hl->wdir,
-			G_DIR_SEPARATOR_S,
-			"database",
-			G_DIR_SEPARATOR_S,
-			"ap",
-			hl->ap_red[hl->iraf_hdsql_r],
-			NULL);
-      break;
-
-    case CAL_THAR:
-      fp_db=g_strconcat(hl->wdir,
-			G_DIR_SEPARATOR_S,
-			"database",
-			G_DIR_SEPARATOR_S,
-			"ec",
-			hl->thar_red[hl->iraf_hdsql_r],
-			NULL);
-      break;
-    }
-
-    switch(cal){
-    case CAL_AP:
-    case CAL_THAR:
-      if(access(fp_db, F_OK)==0){
-	ret=TRUE;
-      }
-      g_free(fp_db);
-      break;
-
-    case CAL_FLAT:
-      ret=TRUE;
-      break;
-    }
-  }
-
-  g_free(fp_cal);
-
-  switch(cal){
-  case CAL_AP:
-    hl->flag_ap_red[hl->iraf_hdsql_r]=ret;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(hl->check_ap_red), 
-				 ret);
-    gtk_widget_set_sensitive(hl->button_flat_red,ret);
-    gtk_widget_set_sensitive(hl->button_thar_red,ret);
-    gtk_widget_set_sensitive(hl->check_auto_red,ret);
-    if(!ret){
-      gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(hl->check_auto_red), 
-				   ret);
-    }
-    break;
-
-  case CAL_THAR:
-    hl->flag_thar_red[hl->iraf_hdsql_r]=ret;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(hl->check_thar_red), 
-				 ret);
-    break;
-
-  case CAL_FLAT:
-    get_flat_scnm(hl);
-    break;
-  }
-}
-
 void get_flat_scnm(typHLOG *hl){
   gchar *c;
   gint ret;
@@ -1277,14 +1185,35 @@ gint get_cnt(typHLOG *hl, gint i_file){
 void iraf_obj(typHLOG *hl, gint i_sel, gint i_file){
   gchar *tmp; 
 
-  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s \"%08d\" %s %s %s %s %s %d %d %d %d %d %s %s %d;rm -rf %s\'",
+  switch(ql_ext_check(hl)){
+  case -1:
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "Another reduction process is still running.",
+		  " ",
+		  "Please close it before creating a new reduction session.",
+		  NULL);
+    return;
+    break;
+    
+  case 0:
+  case 1:
+    break;
+  }
+
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s \"%08d\" %s %s %s %s %s %d %d %d %d %d %s %s %d\'",
 		      hl->ql_terminal,
-		      hl->ql_lock,
 		      hl->wdir,
 		      hl->ql_python,
 		      hl->wdir,
 		      G_DIR_SEPARATOR_S,
 		      GAOES_PY_GRQL,
+		      hl->ql_lock,
 		      hl->frame[i_sel].idnum,
 		      hl->ddir,
 		      hl->ql_ap,
@@ -1298,8 +1227,7 @@ void iraf_obj(typHLOG *hl, gint i_sel, gint i_file){
 		      hl->ql_ge_edx,
 		      hl->ql_blaze,
 		      hl->ql_mask,
-		      hl->ql_line,
-		      hl->ql_lock);
+		      hl->ql_line);
 
   if(debug_flg){
     fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
@@ -1308,10 +1236,10 @@ void iraf_obj(typHLOG *hl, gint i_sel, gint i_file){
   hl->ql_i=i_sel;
   hl->ql_loop=QL_OBJECT;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
-			     (gpointer)hl);
+  			     (gpointer)hl);
   hl->frame[i_sel].qlr=QLR_NOW;
   tree_update_frame(hl);
-  ext_play(tmp);
+  ql_ext_play(hl,tmp);
   
   g_free(tmp);
 }
@@ -1319,17 +1247,37 @@ void iraf_obj(typHLOG *hl, gint i_sel, gint i_file){
 void iraf_obj_splot(typHLOG *hl, gint i_sel, gchar *spec_file){
   gchar *tmp; 
 
-  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s %s %d;rm -rf %s\'",
+  switch(ql_ext_check(hl)){
+  case -1:
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "Another reduction process is still running.",
+		  " ",
+		  "Please close it before creating a new reduction session.",
+		  NULL);
+    return;
+    break;
+    
+  case 0:
+  case 1:
+    break;
+  }
+
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s %s %d\'",
 		      hl->ql_terminal,
-		      hl->ql_lock,
 		      hl->wdir,
 		      hl->ql_python,
 		      hl->wdir,
 		      G_DIR_SEPARATOR_S,
 		      GAOES_PY_SPLOT,
+		      hl->ql_lock,
 		      spec_file,
-		      hl->ql_line,
-		      hl->ql_lock);
+		      hl->ql_line);
 
   if(debug_flg){
     fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
@@ -1339,7 +1287,7 @@ void iraf_obj_splot(typHLOG *hl, gint i_sel, gchar *spec_file){
   hl->ql_loop=QL_SPLOT;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
   			     (gpointer)hl);
-  ext_play(tmp);
+  ql_ext_play(hl,tmp);
   
   g_free(tmp);
 }
@@ -1413,14 +1361,35 @@ void make_obj_batch(typHLOG *hl, gchar *obj_in){
   gchar *tmp;
   gint i_sel;
 
-  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s %s %s %s %s %s %s %d %d %d %d %d %s %s;rm -rf %s\'",
+  switch(ql_ext_check(hl)){
+  case -1:
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "Another reduction process is still running.",
+		  " ",
+		  "Please close it before creating a new reduction session.",
+		  NULL);
+    return;
+    break;
+    
+  case 0:
+  case 1:
+    break;
+  }
+
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s %s %s %s %s %s %s %d %d %d %d %d %s %s\'",
 		      hl->ql_terminal,
-		      hl->ql_lock,
 		      hl->wdir,
 		      hl->ql_python,
 		      hl->wdir,
 		      G_DIR_SEPARATOR_S,
 		      GAOES_PY_GRQL_BATCH,
+		      hl->ql_lock,
 		      obj_in,
 		      hl->ddir,
 		      hl->ql_ap,
@@ -1433,8 +1402,7 @@ void make_obj_batch(typHLOG *hl, gchar *obj_in){
 		      hl->ql_ge_stx,
 		      hl->ql_ge_edx,
 		      hl->ql_blaze,
-		      hl->ql_mask,
-		      hl->ql_lock);
+		      hl->ql_mask);
 
   if(debug_flg){
     fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
@@ -1442,8 +1410,8 @@ void make_obj_batch(typHLOG *hl, gchar *obj_in){
   
   hl->ql_loop=QL_OBJECT_BATCH;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
-			     (gpointer)hl);
-  ext_play(tmp);
+  			     (gpointer)hl);
+  ql_ext_play(hl,tmp);
   g_free(tmp); 
 }
 
@@ -1455,7 +1423,7 @@ void ql_obj_red(GtkWidget *w, gpointer gdata){
   GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(hl->frame_tree));
   gint i_rows;
 
-  
+  /*
   if(hl->ql_timer>0){
     popup_message(hl->w_top, 
 #ifdef USE_GTK3
@@ -1470,7 +1438,7 @@ void ql_obj_red(GtkWidget *w, gpointer gdata){
 		  " ",
 		  NULL);
     return;
-  }    
+    } */   
 
   i_rows=gtk_tree_selection_count_selected_rows (selection);
 
@@ -1701,23 +1669,42 @@ void make_flat(typHLOG *hl, gchar *flat_in){
   gchar *tmp;
   gint i_sel;
 
+  switch(ql_ext_check(hl)){
+  case -1:
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "Another reduction process is still running.",
+		  " ",
+		  "Please close it before creating a new reduction session.",
+		  NULL);
+    return;
+    break;
+    
+  case 0:
+  case 1:
+    break;
+  }
 
-  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s %s %s %s %s %s %d %d;rm -rf %s\'",
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s %s %s %s %s %s %d %d\'",
 		      hl->ql_terminal,
-		      hl->ql_lock,
 		      hl->wdir,
 		      hl->ql_python,
 		      hl->wdir,
 		      G_DIR_SEPARATOR_S,
 		      GAOES_PY_FLAT,
+		      hl->ql_lock,
 		      flat_in,
 		      hl->ddir,
 		      hl->ql_flat_new,
 		      hl->ql_ap,
 		      hl->ql_ap_new,
 		      hl->ql_st_x,
-		      hl->ql_ed_x,
-		      hl->ql_lock);
+		      hl->ql_ed_x);
 
   if(debug_flg){
     fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
@@ -1725,9 +1712,10 @@ void make_flat(typHLOG *hl, gchar *flat_in){
 
   hl->ql_loop=QL_FLAT;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
-			     (gpointer)hl);
+  			     (gpointer)hl);
   tree_update_frame(hl);
-  ext_play(tmp);
+  ql_ext_play(hl, tmp);
+  
   g_free(tmp); 
 }
 
@@ -1755,6 +1743,7 @@ void ql_flat_red(GtkWidget *w, gpointer gdata){
   GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(hl->frame_tree));
   gint i_rows;
 
+  /*
   if(hl->ql_timer>0){
     popup_message(hl->w_top, 
 #ifdef USE_GTK3
@@ -1768,7 +1757,7 @@ void ql_flat_red(GtkWidget *w, gpointer gdata){
 		  "Please close it before creating a new reduction session.",
 		  NULL);
     return;
-  }    
+    } */   
 
   i_rows=gtk_tree_selection_count_selected_rows (selection);
 
@@ -1966,6 +1955,27 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
   gchar *tmp;
   gchar *thar_bak, *src, *dest;
 
+  switch(ql_ext_check(hl)){
+  case -1:
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "Another reduction process is still running.",
+		  " ",
+		  "Please close it before creating a new reduction session.",
+		  NULL);
+    return;
+    break;
+    
+  case 0:
+  case 1:
+    break;
+  }
+
   if(strcmp(hl->frame[i_sel].type,"COMPARISON")!=0){
     popup_message(hl->w_top, 
 #ifdef USE_GTK3
@@ -1978,7 +1988,7 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
 		  NULL);
     return;
   }
-
+  
   if(hl->ql_thar_new) g_free(hl->ql_thar_new);
   hl->ql_thar_new=g_strdup_printf("ThAr.%08d", hl->frame[i_sel].idnum);
 
@@ -2016,31 +2026,30 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
   
   hl->frame[i_sel].cal=QLCAL_COMP0;
 
-  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s \"%08d\" %s %s %s %s;rm -rf %s\'",
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s \"%08d\" %s %s %s %s\'",
 		      hl->ql_terminal,
-		      hl->ql_lock,
 		      hl->wdir,
 		      hl->ql_python,
 		      hl->wdir,
 		      G_DIR_SEPARATOR_S,
 		      GAOES_PY_COMP,
+		      hl->ql_lock,
 		      hl->frame[i_sel].idnum,
 		      hl->ddir,
 		      hl->ql_thar_new,
 		      hl->ql_ap,
-		      hl->ql_thar1d,
-		      hl->ql_lock);
+		      hl->ql_thar1d);
 
   if(debug_flg){
     fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
   }
-  
+
+
   hl->ql_loop=QL_THAR;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
-			     (gpointer)hl);
+  			     (gpointer)hl);
   tree_update_frame(hl);
-  ext_play(tmp);
-  
+  ql_ext_play(hl,tmp);
   g_free(tmp);
 
 }
@@ -2048,6 +2057,27 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
 
 void iraf_mask(typHLOG *hl, gint i_sel, gint i_file){
   gchar *tmp, *tmp2; 
+
+  switch(ql_ext_check(hl)){
+  case -1:
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "Another reduction process is still running.",
+		  " ",
+		  "Please close it before creating a new reduction session.",
+		  NULL);
+    return;
+    break;
+    
+  case 0:
+  case 1:
+    break;
+  }
 
   tmp=g_strdup_printf("%s%sG%08docs_ecfw.fits",
 		      hl->wdir,
@@ -2077,17 +2107,16 @@ void iraf_mask(typHLOG *hl, gint i_sel, gint i_file){
   if(hl->ql_mask_new) g_free(hl->ql_mask_new);
   hl->ql_mask_new=g_strdup_printf("Mask.%08d", hl->frame[i_sel].idnum);
 
-  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s G%08docs_ecfw %s;rm -rf %s\'",
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s G%08docs_ecfw %s\'",
 		      hl->ql_terminal,
-		      hl->ql_lock,
 		      hl->wdir,
 		      hl->ql_python,
 		      hl->wdir,
 		      G_DIR_SEPARATOR_S,
 		      GAOES_PY_MASK,
+		      hl->ql_lock,
 		      hl->frame[i_sel].idnum,
-		      hl->ql_mask_new,
-		      hl->ql_lock);
+		      hl->ql_mask_new);
 
   if(debug_flg){
     fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
@@ -2095,8 +2124,8 @@ void iraf_mask(typHLOG *hl, gint i_sel, gint i_file){
   
   hl->ql_loop=QL_MASK;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
-			     (gpointer)hl);
-  ext_play(tmp);
+  			     (gpointer)hl);
+  ql_ext_play(hl,tmp);
   
   g_free(tmp);
 
@@ -2105,6 +2134,27 @@ void iraf_mask(typHLOG *hl, gint i_sel, gint i_file){
 
 void iraf_blaze(typHLOG *hl, gint i_sel, gint i_file){
   gchar *tmp, *tmp2; 
+
+  switch(ql_ext_check(hl)){
+  case -1:
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "Another reduction process is still running.",
+		  " ",
+		  "Please close it before creating a new reduction session.",
+		  NULL);
+    return;
+    break;
+    
+  case 0:
+  case 1:
+    break;
+  }
 
   if(strcmp(hl->frame[i_sel].type,"FLAT")!=0){
     popup_message(hl->w_top, 
@@ -2147,18 +2197,17 @@ void iraf_blaze(typHLOG *hl, gint i_sel, gint i_file){
   if(hl->ql_blaze_new) g_free(hl->ql_blaze_new);
   hl->ql_blaze_new=g_strdup_printf("cBlaze.%08d", hl->frame[i_sel].idnum);
 
-  tmp=g_strdup_printf("%s \'touch %s;cd %s;%s %s%s%s G%08docs_ecfw %s %s;rm -rf %s\'",
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s G%08docs_ecfw %s %s\'",
 		      hl->ql_terminal,
-		      hl->ql_lock,
 		      hl->wdir,
 		      hl->ql_python,
 		      hl->wdir,
 		      G_DIR_SEPARATOR_S,
 		      GAOES_PY_BLAZE,
+		      hl->ql_lock,
 		      hl->frame[i_sel].idnum,
 		      hl->ql_blaze_new,
-		      hl->ql_mask,
-		      hl->ql_lock);
+		      hl->ql_mask);
 
   if(debug_flg){
     fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
@@ -2166,8 +2215,8 @@ void iraf_blaze(typHLOG *hl, gint i_sel, gint i_file){
   
   hl->ql_loop=QL_BLAZE;
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
-			     (gpointer)hl);
-  ext_play(tmp);
+  			     (gpointer)hl);
+  ql_ext_play(hl,tmp);
   
   g_free(tmp);
 
@@ -2221,6 +2270,7 @@ void ql_thar_red(GtkWidget *w, gpointer gdata){
   gint i_rows;
   gint tmp_scr=hl->scr_flag;
 
+  /*
   if(hl->ql_timer>0){
     popup_message(hl->w_top, 
 #ifdef USE_GTK3
@@ -2234,7 +2284,7 @@ void ql_thar_red(GtkWidget *w, gpointer gdata){
 		  "Please close it before creating a new reduction session.",
 		  NULL);
     return;
-  }    
+    } */   
 
   i_rows=gtk_tree_selection_count_selected_rows (selection);
 
@@ -2270,6 +2320,7 @@ void ql_mask(GtkWidget *w, gpointer gdata){
   gint i_rows;
   gint tmp_scr=hl->scr_flag;
 
+  /*
   if(hl->ql_timer>0){
     popup_message(hl->w_top, 
 #ifdef USE_GTK3
@@ -2283,7 +2334,7 @@ void ql_mask(GtkWidget *w, gpointer gdata){
 		  "Please close it before creating a new reduction session.",
 		  NULL);
     return;
-  }    
+    } */   
 
   i_rows=gtk_tree_selection_count_selected_rows (selection);
 
@@ -2320,6 +2371,7 @@ void ql_blaze(GtkWidget *w, gpointer gdata){
   gint i_rows;
   gint tmp_scr=hl->scr_flag;
 
+  /*
   if(hl->ql_timer>0){
     popup_message(hl->w_top, 
 #ifdef USE_GTK3
@@ -2333,7 +2385,7 @@ void ql_blaze(GtkWidget *w, gpointer gdata){
 		  "Please close it before creating a new reduction session.",
 		  NULL);
     return;
-  }    
+    } */   
 
   i_rows=gtk_tree_selection_count_selected_rows (selection);
 

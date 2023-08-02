@@ -14,6 +14,8 @@ gboolean flagChildDialog=FALSE;
 GtkWidget *frame_table;
 guint entry_height=24;
 gboolean e_init_flag=FALSE;
+volatile sig_atomic_t e_flag = 0;
+
 
 void write_muttrc();
 void write_msmtprc();
@@ -29,6 +31,8 @@ static void load_note ();
 
 void update_frame_tree();
 int printfits();
+gint ql_ext_check();
+void ql_ext_play();
 void ext_play();
 gint scan_command();
 gint printdir();
@@ -784,6 +788,9 @@ void load_cfg_cal (typHLOG *hl)
       
       sdir=g_strdup(c_buf);
     }
+    else{
+      sdir=NULL;
+    }
 
     if((sdir)&&(strcmp(hl->wdir,sdir)!=0)){
       cp_flag=TRUE;
@@ -792,7 +799,7 @@ void load_cfg_cal (typHLOG *hl)
     if(hl->upd_flag){
       ret=TRUE;
     }
-    else{
+    else if(sdir){
       tmp=g_strdup_printf("      %s ?",sdir);
       ret=popup_dialog(hl->w_top, 
 #ifdef USE_GTK3
@@ -1828,6 +1835,78 @@ void SendMail(GtkWidget *w, gpointer gdata){
 
 }
 
+void abrt_handler(int sig) {
+  e_flag = 1;
+}
+
+gint ql_ext_check(typHLOG *hl)
+{
+  int cur_id=0;
+  gint ret;
+  FILE *fp;
+
+  if((fp=fopen(hl->ql_lock,"r"))!=NULL){
+    fscanf(fp, "%d", &cur_id);
+    fclose(fp);
+    
+    if(cur_id>0){
+      switch(hl->ql_loop){
+      case QL_SPLOT:
+      case QL_OBJECT:
+	// Stop current session
+	killpg(cur_id, SIGINT);
+	waitpid(cur_id,0,WNOHANG);
+	g_source_remove(hl->ql_timer);
+	check_ql_finish(hl);
+	hl->ql_timer=-1;
+	usleep(50000);
+	return(1);
+	break;
+	
+      default:
+	// Flat etc. 
+	// Don't disturb current running session
+	return(-1);
+	break;
+      }
+    }
+  }
+  else{
+    // No current running session
+    return(0);
+  }
+  
+}
+
+
+void ql_ext_play(typHLOG *hl, gchar *exe_command)
+{
+  static pid_t pid;
+  int cur_id=0,pgid;
+  gchar *cmdline;
+  gint ret;
+  FILE *fp;
+  int s;
+
+  
+  waitpid(pid,0,WNOHANG);
+  if(strcmp(exe_command,"\0")!=0){
+    if( (pid = fork()) == 0 ){
+      
+      ret=system(exe_command);
+      unlink(hl->ql_lock);
+      
+      _exit(-1);
+      signal(SIGCHLD,ChildTerm);
+    }
+    else{
+      // printf("Process ID=%d\n",pid);
+      //fp=fopen(ql_lock,"w");
+      //fprintf(fp,"%d",pid);
+      //fclose(fp);
+    }
+  }
+}
 
 void ext_play(gchar *exe_command)
 {
@@ -2578,6 +2657,12 @@ gboolean start_scan_command(gpointer gdata){
   if(hl->num_old!=hl->num){
     hl->num_old=hl->num;
     update=TRUE;
+    
+    if(hl->auto_red){
+      if((upd0)&&(strcmp(hl->frame[hl->num-1].type,"OBJECT")==0)){
+	iraf_obj(hl, hl->num-1, hl->frame[hl->num-1].idnum);
+      }
+    }
   }
 
   gtk_label_set_markup(GTK_LABEL(hl->w_status), 
@@ -2600,7 +2685,7 @@ gboolean start_scan_command(gpointer gdata){
       }
     }
   }
-  
+
   hl->scanning_timer=-1;
   return(FALSE);
 }
@@ -2724,6 +2809,8 @@ void do_quit (GtkWidget *widget, gpointer gdata)
 
   hl=(typHLOG *)gdata;
 
+  ql_ext_check(hl);
+  
   if(hl->ql_timer>0){
     popup_message(hl->w_top, 
 #ifdef USE_GTK3
@@ -3108,10 +3195,29 @@ void gui_init(typHLOG *hl){
 		    G_CALLBACK (ql_obj_red), (gpointer)hl);
 
 
-  label = gtk_label_new ("splot");
-  gtkut_table_attach(table, label, 1, 2, 0, 1,
+  frame1 = gtkut_frame_new ("QL");
+  gtkut_table_attach(table, frame1, 1, 2, 0, 2,
 		     GTK_FILL,GTK_SHRINK,0,0);
 
+  hbox2 = gtkut_hbox_new(FALSE,2);
+  gtk_container_set_border_width (GTK_CONTAINER (hbox2), 2);
+  gtk_container_add (GTK_CONTAINER (frame1), hbox2);
+
+  check =  gtk_check_button_new_with_label ("Auto");
+  gtk_box_pack_start(GTK_BOX(hbox2),check,FALSE,FALSE,0);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), hl->auto_red);
+  g_signal_connect (check, "toggled",
+		    G_CALLBACK (cc_get_toggle),
+		    &hl->auto_red);
+
+  frame1 = gtkut_frame_new ("splot");
+  gtkut_table_attach(table, frame1, 2, 3, 0, 2,
+		     GTK_FILL,GTK_SHRINK,0,0);
+
+  hbox2 = gtkut_hbox_new(FALSE,2);
+  gtk_container_set_border_width (GTK_CONTAINER (hbox2), 2);
+  gtk_container_add (GTK_CONTAINER (frame1), hbox2);
+  
   {
     GtkListStore *store;
     GtkTreeIter iter, iter_set;	  
@@ -3149,8 +3255,7 @@ void gui_init(typHLOG *hl){
     
 
     combo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
-    gtkut_table_attach(table, combo, 1, 2, 1, 2,
-		       GTK_FILL,GTK_SHRINK,0,0);
+    gtk_box_pack_start(GTK_BOX(hbox2),combo,FALSE, FALSE, 0);
     g_object_unref(store);
     
     renderer = gtk_cell_renderer_text_new();
@@ -3164,9 +3269,8 @@ void gui_init(typHLOG *hl){
   }
  
   frame1 = gtkut_frame_new ("Calibration");
-  gtkut_table_attach(table, frame1, 4, 5, 0, 2,
+  gtkut_table_attach(table, frame1, 3, 5, 0, 2,
 		     GTK_FILL,GTK_SHRINK,0,0);
-  gtk_container_set_border_width (GTK_CONTAINER (frame1), 5);
 
   hbox2 = gtkut_hbox_new(FALSE,2);
   gtk_container_set_border_width (GTK_CONTAINER (hbox2), 2);
@@ -3209,7 +3313,7 @@ void gui_init(typHLOG *hl){
   table = gtkut_table_new (5, 2, FALSE, 2, 2, 2);
   gtk_container_add (GTK_CONTAINER (frame), table);
 
-  label = gtk_label_new ("measuring at");
+  label = gtk_label_new ("measure at");
   gtkut_table_attach(table, label, 0, 1, 0, 1,
 		     GTK_FILL,GTK_SHRINK,0,0);
 

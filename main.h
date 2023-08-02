@@ -658,3 +658,4 @@ int http_c_fcdb_new();
 
 void update_seimei_log();
 void save_cfg_cal();
+void check_ql_finish();
