@@ -927,8 +927,8 @@ void load_cfg_cal (typHLOG *hl)
 	  g_free(ec_fits0);
 	}
       }
-      g_free(ec_fits);
       ac_fits=access(ec_fits, F_OK);
+      g_free(ec_fits);
 	
       // ThAr 1D datavase
       ec_db=g_strconcat(hl->wdir,
@@ -951,8 +951,8 @@ void load_cfg_cal (typHLOG *hl)
 	  g_free(ec_db0);
 	}
       }
-      g_free(ec_db);
       ac_db=access(ec_db, F_OK);
+      g_free(ec_db);
     }
 
     if(xmms_cfg_read_string(cfgfile, "LastCAL",
@@ -1854,11 +1854,16 @@ gint ql_ext_check(typHLOG *hl)
       case QL_SPLOT:
       case QL_OBJECT:
 	// Stop current session
+	g_source_remove(hl->ql_timer);
+	hl->ql_timer=-1;
+
+	printf("Killing %d...\n",cur_id);
+	
+	unlink(hl->ql_lock);
 	killpg(cur_id, SIGINT);
 	waitpid(cur_id,0,WNOHANG);
-	g_source_remove(hl->ql_timer);
+	
 	check_ql_finish(hl);
-	hl->ql_timer=-1;
 	usleep(50000);
 	return(1);
 	break;
@@ -1872,7 +1877,7 @@ gint ql_ext_check(typHLOG *hl)
     }
   }
   else{
-    // No current running session
+    printf("No PyRAF sessions have been found.\n");
     return(0);
   }
   
@@ -1894,7 +1899,6 @@ void ql_ext_play(typHLOG *hl, gchar *exe_command)
     if( (pid = fork()) == 0 ){
       
       ret=system(exe_command);
-      unlink(hl->ql_lock);
       
       _exit(-1);
       signal(SIGCHLD,ChildTerm);
