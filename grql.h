@@ -9,6 +9,7 @@ void iraf_apall();
 void iraf_ecreidentify();
 void iraf_ecidentify();
 void get_flat_scnm();
+void iraf_flat_auto();
 
 void set_ql_frame_label();
 void set_cal_frame_red();

@@ -1480,6 +1480,7 @@ void ql_obj_red(GtkWidget *w, gpointer gdata){
 
 ///////////////// Flat ///////////////////
 
+
 void iraf_flat(typHLOG *hl, gint i_sel, gint i_file, gchar *flat_in){
   gchar *tmp;
   gchar *ap_bak, *src, *dest;
@@ -1795,6 +1796,101 @@ void ql_flat_red(GtkWidget *w, gpointer gdata){
 }
 
 
+void iraf_flat_auto(typHLOG *hl){
+  gchar *flat_in;
+  gchar *ap_bak, *src, *dest;
+  gint i, i_sel, i_file;
+  FILE *fp;
+
+  i_file=hl->frame[hl->auto_flat[0]].idnum;
+
+  if(!hl->ql_flat_new){
+    hl->ql_flat_new=g_strdup_printf("Flat.%08d", i_file);
+  }
+  if(!hl->ql_ap_new){
+    hl->ql_ap_new=g_strdup_printf("Ap.%08d", i_file);
+
+    // Check Redo
+    if(strcmp(hl->ql_ap_new,hl->ql_ap)==0){
+      // Remove fits
+      src=g_strconcat(hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      hl->ql_ap,
+		      ".fits",
+		      NULL);
+      if(access(src, F_OK)==0){
+	unlink(src);
+      }
+      g_free(src);
+
+      // Remove ec.fits
+      src=g_strconcat(hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      hl->ql_ap,
+		      ".ec.fits",
+		      NULL);
+      if(access(src, F_OK)==0){
+	unlink(src);
+      }
+      g_free(src);
+
+      // Remove database
+      src=g_strconcat(hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      "database",
+		      G_DIR_SEPARATOR_S,
+		      "ap",
+		      hl->ql_ap,
+		      NULL);
+      if(access(src, F_OK)==0){
+	unlink(src);
+      }
+      g_free(src);
+
+      // Use default ap
+      g_free(hl->ql_ap);
+      hl->ql_ap=g_strdup(GAOES_AP);     
+    }
+  }
+  
+  flat_in=g_strdup_printf("%s%sflat.in",
+			  hl->wdir,
+			  G_DIR_SEPARATOR_S);
+
+  if(access(flat_in, F_OK)==0){
+    unlink(flat_in);
+  }
+  fp=fopen(flat_in,"w");
+  
+  for(i=0;i<AUTO_FLAT_NUM;i++){
+    i_sel=hl->auto_flat[i];
+    hl->frame[i_sel].cal=QLCAL_FLAT0;
+
+    fprintf(fp,"%08ld\n",hl->frame[i_sel].idnum);
+  }
+
+  fclose(fp);
+
+  if(access(flat_in, F_OK)==0){
+    make_flat(hl, flat_in);
+  }
+  else{
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-error", 
+#else
+		  GTK_STOCK_DIALOG_ERROR,
+#endif
+		  -1,
+		  flat_in,
+		  " ",
+		  "Failed to create a Flat list file.",
+		  NULL);
+  }
+  g_free(flat_in);
+}
+
+
 ///////////////// ThAr /////////////////
 
 void finish_thar(typHLOG *hl){
@@ -1950,7 +2046,7 @@ void finish_blaze(typHLOG *hl){
   }    
 }
 
-
+  
 void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
   gchar *tmp, *tmp_thar1d;
   gchar *thar_bak, *src, *dest;

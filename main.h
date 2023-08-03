@@ -78,6 +78,9 @@
 #define QL_PYTHON "python3"
 #define QL_TERMINAL "xterm -geometry 85x10 -e"
 
+#define AUTO_FLAT0    5
+#define AUTO_FLAT_NUM 20
+
 #define SMOKA_LOG_HOST "www.o.kwasan.kyoto-u.ac.jp"
 #define SMOKA_LOG_PATH "/seimei_obs_log/add_comment.py"
 #define SMOKA_LOG_FILE "/tmp/grlog-www-%d.txt"
@@ -563,6 +566,10 @@ struct _typHLOG{
 
   gboolean auto_red;
   GtkWidget *check_auto_red;
+
+  gint done_flat;
+  gint done_thar;
+  gint auto_flat[AUTO_FLAT_NUM];
 
   gchar *ql_thar1d;
   gchar *ql_thar2d;

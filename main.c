@@ -464,13 +464,6 @@ void cc_get_disp_time (GtkWidget * widget, gpointer gdata)
 }
 
 
-void cc_auto_red (GtkWidget * widget, gpointer gdata)
-{
-  typHLOG *hl=(typHLOG *)gdata;
-
-  hl->auto_red=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-}
-
 
 void cc_get_combo_box (GtkWidget *widget,  gint * gdata)
 {
@@ -1368,6 +1361,7 @@ void update_frame_tree(typHLOG *hl, gboolean force_flg){
 
   if(debug_flg){
     fprintf(stderr, "End Load\n");
+    fprintf(stderr, "Done_Flat=%d\n",hl->done_flat);
   }
   
   // No change
@@ -2636,8 +2630,9 @@ gpointer thread_scan_command(gpointer gdata){
 }
 
 gboolean start_scan_command(gpointer gdata){
-  gboolean update=FALSE;
+  gboolean update=FALSE, aql_flag;
   typHLOG *hl=(typHLOG *)gdata;
+  
   
 
   if(hl->scloop) return(FALSE);
@@ -2661,9 +2656,33 @@ gboolean start_scan_command(gpointer gdata){
   if(hl->num_old!=hl->num){
     hl->num_old=hl->num;
     update=TRUE;
-    
-    if(hl->auto_red){
-      if((upd0)&&(strcmp(hl->frame[hl->num-1].type,"OBJECT")==0)){
+
+    if((hl->auto_red)&&(upd0)){
+      aql_flag=TRUE;
+      if(strcmp(hl->frame[hl->num-1].type,"BIAS")==0){
+	aql_flag=FALSE;
+      }
+      else if(strcmp(hl->frame[hl->num-1].type,"FLAT")==0){
+	if(hl->done_flat>=AUTO_FLAT0){
+	  aql_flag=FALSE;
+	}
+	if(hl->done_flat<AUTO_FLAT_NUM){
+	  hl->auto_flat[hl->done_flat]=hl->num-1;
+	}
+	hl->done_flat++;
+	if(hl->done_flat==AUTO_FLAT_NUM){
+	  iraf_flat_auto(hl);
+	}
+      }
+      else if(strcmp(hl->frame[hl->num-1].type,"COMPARISON")==0){
+	if(hl->done_thar==0){
+	  aql_flag=FALSE;
+	  iraf_thar(hl, hl->num-1, hl->frame[hl->num-1].idnum);
+	}
+	hl->done_thar++;
+      }
+
+      if(aql_flag){
 	iraf_obj(hl, hl->num-1, hl->frame[hl->num-1].idnum);
       }
     }
@@ -3210,6 +3229,7 @@ void gui_init(typHLOG *hl){
   check =  gtk_check_button_new_with_label ("Auto");
   gtk_box_pack_start(GTK_BOX(hbox2),check,FALSE,FALSE,0);
   gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), hl->auto_red);
+  gtk_widget_set_sensitive(check, hl->upd_flag);
   g_signal_connect (check, "toggled",
 		    G_CALLBACK (cc_get_toggle),
 		    &hl->auto_red);
@@ -3843,6 +3863,7 @@ void usage(void)
   g_print(" grlog : Seimei / GAOES-RV Obs-Log Editor   Ver"VERSION"\n");
   g_print("  [usage] %% grlog [-s shared_dir] [-w work_dir] [-l login.cl_dir] [-h] [-u] data_dir\n");
   g_print("  -u : Automatic Update for comming frames\n");
+  g_print("  -a : Automatic Quick Reduction ON (only w/-u)\n");
   g_print("  -p : Push mode for comment update to Seimei Exposure Log\n");
   g_print("  -d : Debug mode w/ Network logging\n\n");
   g_print("  -s shared_dir   : dir. where ref frames and QL pys are located\n");
@@ -3864,8 +3885,9 @@ void get_option(int argc, char **argv, typHLOG *hl)
   
   hl->sdir=NULL;
   hl->wdir=NULL;
-
+ 
   hl->push_flag=FALSE;
+  hl->auto_red=FALSE;
 
   if(argc<2){
     usage();
@@ -3958,6 +3980,11 @@ void get_option(int argc, char **argv, typHLOG *hl)
       debug_flg=TRUE;
       i_opt++;
     }
+    else if ((strcmp(argv[i_opt], "-a") == 0) ||
+	     (strcmp(argv[i_opt], "--autoql") == 0)) {
+      hl->auto_red=TRUE;
+      i_opt++;
+    }
     else if ((strcmp(argv[i_opt], "-p") == 0) ||
 	     (strcmp(argv[i_opt], "--push") == 0)) {
       hl->push_flag=TRUE;
@@ -3991,7 +4018,10 @@ void get_option(int argc, char **argv, typHLOG *hl)
     }
 
   }
-  
+
+  if(!hl->upd_flag){
+    hl->auto_red=FALSE;
+  }
 }
 
 
@@ -4089,6 +4119,9 @@ int main(int argc, char* argv[]){
   flag_make_frame_tree=FALSE;
 
   // IRAF
+  hl->done_flat=0;
+  hl->done_thar=0;
+  
   hl->ql_thar1d=g_strdup(GAOES_THAR1D);
   hl->ql_thar2d=g_strdup(GAOES_THAR2D);
   hl->ql_flat=g_strdup(GAOES_FLAT);
@@ -4134,8 +4167,6 @@ int main(int argc, char* argv[]){
   hl->date_flag=FALSE;
   hl->disp_flag=DISP_ALL;
   hl->sort_flag=SORT_ASCENDING;
-
-  hl->auto_red=FALSE;
 
   for(i=0;i<NUM_SET;i++){
     hl->setname_red[i]=NULL;
