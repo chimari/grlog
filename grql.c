@@ -1952,7 +1952,7 @@ void finish_blaze(typHLOG *hl){
 
 
 void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
-  gchar *tmp;
+  gchar *tmp, *tmp_thar1d;
   gchar *thar_bak, *src, *dest;
 
   switch(ql_ext_check(hl)){
@@ -1991,9 +1991,11 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
   
   if(hl->ql_thar_new) g_free(hl->ql_thar_new);
   hl->ql_thar_new=g_strdup_printf("ThAr.%08d", hl->frame[i_sel].idnum);
+  tmp_thar1d=g_strdup_printf("%s.center",hl->ql_thar_new);
 
   // Check Redo
-  if(strcmp(hl->ql_thar_new,hl->ql_thar1d)==0){
+  if(strcmp(tmp_thar1d,hl->ql_thar1d)==0){
+    // The case New and Current are same
     // Remove fits
     src=g_strconcat(hl->wdir,
 		    G_DIR_SEPARATOR_S,
@@ -2022,7 +2024,7 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
     g_free(hl->ql_thar1d);
     hl->ql_thar1d=g_strdup(GAOES_THAR1D);
   }
-
+  g_free(tmp_thar1d);
   
   hl->frame[i_sel].cal=QLCAL_COMP0;
 
