@@ -70,6 +70,7 @@
 #define GAOES_PY_SPLOT "splot.py"
 #define GAOES_PY_MASK "gaoes_mkmask.py"
 #define GAOES_PY_BLAZE "gaoes_mkblaze.py"
+#define GAOES_PY_MKREF "gaoes_mkref.py"
 
 #define GAOES_ST_X (-54)
 #define GAOES_ED_X 53

@@ -592,6 +592,22 @@ void prepare_pyraf(typHLOG *hl){
   }
   g_free(dest);
 
+  // gaoes_mkref.py
+  dest=g_strconcat(hl->wdir,
+		   G_DIR_SEPARATOR_S,
+		   GAOES_PY_MKREF,
+		   NULL);
+  if(access(dest, F_OK)!=0){
+    src=g_strconcat(hl->sdir,
+		    G_DIR_SEPARATOR_S,
+		    GAOES_PY_MKREF,
+		    NULL);
+    copy_file(src, dest);
+    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
+    g_free(src);
+  }
+  g_free(dest);
+
   // splot.py
   dest=g_strconcat(hl->wdir,
 		   G_DIR_SEPARATOR_S,
