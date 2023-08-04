@@ -544,6 +544,22 @@ void prepare_pyraf(typHLOG *hl){
   }
   g_free(dest);
 		      
+  // gaoes_comp_obj.py
+  dest=g_strconcat(hl->wdir,
+		   G_DIR_SEPARATOR_S,
+		   GAOES_PY_COMP_OBJ,
+		   NULL);
+  if(access(dest, F_OK)!=0){
+    src=g_strconcat(hl->sdir,
+		    G_DIR_SEPARATOR_S,
+		    GAOES_PY_COMP_OBJ,
+		    NULL);
+    copy_file(src, dest);
+    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
+    g_free(src);
+  }
+  g_free(dest);
+		      
   // gaoes_mkmask.py
   dest=g_strconcat(hl->wdir,
 		   G_DIR_SEPARATOR_S,
@@ -688,7 +704,7 @@ void popup_message(GtkWidget *parent, gchar* stock_id,gint delay, ...){
     dialog = gtk_dialog_new();
   }
   else{
-    dialog = gtk_dialog_new_with_buttons("HDS Log Editor : Message",
+    dialog = gtk_dialog_new_with_buttons("GAOES-RV Log Editor : Message",
 					 GTK_WINDOW(parent),
 					 GTK_DIALOG_MODAL,
 #ifdef USE_GTK3
@@ -700,7 +716,7 @@ void popup_message(GtkWidget *parent, gchar* stock_id,gint delay, ...){
   }
   gtk_container_set_border_width(GTK_CONTAINER(dialog),5);
   gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(parent));
-  gtk_window_set_title(GTK_WINDOW(dialog),"HDS Log Editor : Message");
+  gtk_window_set_title(GTK_WINDOW(dialog),"GAOES-RV Log Editor : Message");
 
 #if !GTK_CHECK_VERSION(2,21,8)
   gtk_dialog_set_has_separator(GTK_DIALOG(dialog),FALSE);
@@ -774,7 +790,7 @@ gboolean wait_for_file(typHLOG *hl, gchar *msg){
 
   gtk_container_set_border_width(GTK_CONTAINER(dialog),5);
   gtk_window_set_transient_for(GTK_WINDOW(dialog),GTK_WINDOW(hl->w_top));
-  gtk_window_set_title(GTK_WINDOW(dialog),"HDS Log Editor : Message");
+  gtk_window_set_title(GTK_WINDOW(dialog),"GAOES-RV Log Editor : Message");
   gtk_window_set_modal(GTK_WINDOW(dialog),TRUE);
 
   timer=g_timeout_add(1000, 
@@ -854,7 +870,7 @@ gboolean popup_dialog(GtkWidget *parent, gchar* stock_id, ...){
 
   va_start(args, stock_id);
 
-  dialog = gtk_dialog_new_with_buttons("HDS Log Editor : Dialog",
+  dialog = gtk_dialog_new_with_buttons("GAOES-RV Log Editor : Dialog",
 				       GTK_WINDOW(parent),
 				       GTK_DIALOG_MODAL,
 #ifdef USE_GTK3
@@ -932,7 +948,7 @@ gboolean write_dialog(typHLOG *hl, gchar* stock_id, gchar* file_str){
   GtkWidget *vbox;
   gboolean ret=FALSE;
 
-  dialog = gtk_dialog_new_with_buttons("HDS Log Editor : Dialog",
+  dialog = gtk_dialog_new_with_buttons("GAOES-RV Log Editor : Dialog",
 				       GTK_WINDOW(hl->w_top),
 				       GTK_DIALOG_MODAL,
 #ifdef USE_GTK3
@@ -2137,6 +2153,122 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
 		      hl->ql_thar_new,
 		      hl->ql_ap,
 		      hl->ql_thar1d);
+
+  if(debug_flg){
+    fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
+  }
+
+
+  hl->ql_loop=QL_THAR;
+  hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
+  			     (gpointer)hl);
+  tree_update_frame(hl);
+  ql_ext_play(hl,tmp);
+  g_free(tmp);
+
+}
+
+
+void iraf_thar_obj(typHLOG *hl, gint i_sel, gint i_file){
+  gchar *tmp, *tmp_thar1d;
+  gchar *thar_bak, *src, *dest;
+
+  switch(ql_ext_check(hl)){
+  case -1:
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "Another reduction process is still running.",
+		  " ",
+		  "Please close it before creating a new reduction session.",
+		  NULL);
+    return;
+    break;
+    
+  case 0:
+  case 1:
+    break;
+  }
+
+  if(strcmp(hl->frame[i_sel].type,"COMPARISON")!=0){
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "The selected frame is not \"<b>COMPARISON</b>\".",
+		  NULL);
+    return;
+  }
+  
+  if(hl->ql_thar_new) g_free(hl->ql_thar_new);
+  hl->ql_thar_new=g_strdup_printf("ThAr.%08d", hl->frame[i_sel].idnum);
+  tmp_thar1d=g_strdup_printf("%s.center",hl->ql_thar_new);
+
+  // Check Redo
+  if(strcmp(tmp_thar1d,hl->ql_thar1d)==0){
+    // The case New and Current are same
+    // Remove fits
+    src=g_strconcat(hl->wdir,
+		    G_DIR_SEPARATOR_S,
+		    hl->ql_thar1d,
+		    ".fits",
+		    NULL);
+    if(access(src, F_OK)==0){
+      unlink(src);
+    }
+    g_free(src);
+    
+    // Remove database
+    src=g_strconcat(hl->wdir,
+		    G_DIR_SEPARATOR_S,
+		    "database",
+		    G_DIR_SEPARATOR_S,
+		    "ec",
+		    hl->ql_thar1d,
+		    NULL);
+    if(access(src, F_OK)==0){
+      unlink(src);
+    }
+    g_free(src);
+    
+    // Use default ec
+    g_free(hl->ql_thar1d);
+    hl->ql_thar1d=g_strdup(GAOES_THAR1D);
+  }
+  g_free(tmp_thar1d);
+  
+  hl->frame[i_sel].cal=QLCAL_COMP0;
+
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s \"%08d\" %s %s %s %s %s %d %d %d %d %d %s %s %d\'",
+		      hl->ql_terminal,
+		      hl->wdir,
+		      hl->ql_python,
+		      hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      GAOES_PY_COMP_OBJ,
+		      hl->ql_lock,
+		      hl->frame[i_sel].idnum,
+		      hl->ddir,
+		      hl->ql_thar_new,
+		      hl->ql_ap,
+		      hl->ql_thar1d,
+		      hl->ql_flat,
+		      hl->ql_st_x,
+		      hl->ql_ed_x,
+		      hl->ql_ge_line,
+		      hl->ql_ge_stx,
+		      hl->ql_ge_edx,
+		      hl->ql_blaze,
+		      hl->ql_mask,
+		      hl->ql_line);
+
 
   if(debug_flg){
     fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);

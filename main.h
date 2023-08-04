@@ -66,6 +66,7 @@
 #define GAOES_PY_GRQL_BATCH "grql_batch.py"
 #define GAOES_PY_FLAT "gaoes_flat.py"
 #define GAOES_PY_COMP "gaoes_comp.py"
+#define GAOES_PY_COMP_OBJ "gaoes_comp_obj.py"
 #define GAOES_PY_SPLOT "splot.py"
 #define GAOES_PY_MASK "gaoes_mkmask.py"
 #define GAOES_PY_BLAZE "gaoes_mkblaze.py"
@@ -569,6 +570,7 @@ struct _typHLOG{
 
   gint done_flat;
   gint done_thar;
+  glong done_idnum;
   gint auto_flat[AUTO_FLAT_NUM];
 
   gchar *ql_thar1d;

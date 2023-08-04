@@ -1,4 +1,4 @@
-//    HDS LOG Editor
+//    GAOES-RV LOG Editor
 //   
 //                                           2005.12.08  A.Tajitsu
 
@@ -1361,7 +1361,8 @@ void update_frame_tree(typHLOG *hl, gboolean force_flg){
 
   if(debug_flg){
     fprintf(stderr, "End Load\n");
-    fprintf(stderr, "Done_Flat=%d\n",hl->done_flat);
+    fprintf(stderr, "Done_Flat=%d  Done_ThAr=%d  Done_ID=%08ld\n",
+	    hl->done_flat,hl->done_thar,hl->done_idnum);
   }
   
   // No change
@@ -2079,7 +2080,7 @@ void do_cp_cal(GtkWidget *widget, gpointer gdata){
 		  GTK_STOCK_DIALOG_WARNING,
 #endif
 		  -1,
-		  "<b>Error</b>: cannot access to HDS shared directory.",
+		  "<b>Error</b>: cannot access to GAOES-RV shared directory.",
 		  " ",
 		  hl->sdir,
 		  NULL);
@@ -2659,31 +2660,44 @@ gboolean start_scan_command(gpointer gdata){
 
     if((hl->auto_red)&&(upd0)){
       aql_flag=TRUE;
-      if(strcmp(hl->frame[hl->num-1].type,"BIAS")==0){
+
+      if(hl->frame[hl->num-1].idnum==hl->done_idnum){
 	aql_flag=FALSE;
       }
-      else if(strcmp(hl->frame[hl->num-1].type,"FLAT")==0){
-	if(hl->done_flat>=AUTO_FLAT0){
-	  aql_flag=FALSE;
-	}
-	if(hl->done_flat<AUTO_FLAT_NUM){
-	  hl->auto_flat[hl->done_flat]=hl->num-1;
-	}
-	hl->done_flat++;
-	if(hl->done_flat==AUTO_FLAT_NUM){
-	  iraf_flat_auto(hl);
-	}
-      }
-      else if(strcmp(hl->frame[hl->num-1].type,"COMPARISON")==0){
-	if(hl->done_thar==0){
-	  aql_flag=FALSE;
-	  iraf_thar(hl, hl->num-1, hl->frame[hl->num-1].idnum);
-	}
-	hl->done_thar++;
-      }
+      else{
 
+	if(strcmp(hl->frame[hl->num-1].type,"BIAS")==0){
+	  aql_flag=FALSE;
+	}
+	else if(strcmp(hl->frame[hl->num-1].type,"FLAT")==0){
+	  if(hl->done_flat>=AUTO_FLAT0){
+	    aql_flag=FALSE;
+	  }
+	  if(hl->done_flat<AUTO_FLAT_NUM){
+	    hl->auto_flat[hl->done_flat]=hl->num-1;
+	  }
+	  
+	  hl->done_flat++;
+	  hl->done_idnum=hl->frame[hl->num-1].idnum;
+	  
+	  if(hl->done_flat==AUTO_FLAT_NUM){
+	    iraf_flat_auto(hl);
+	  }
+	}
+	else if(strcmp(hl->frame[hl->num-1].type,"COMPARISON")==0){
+	  if(hl->done_thar==0){
+	    aql_flag=FALSE;
+	    iraf_thar_obj(hl, hl->num-1, hl->frame[hl->num-1].idnum);
+	  }
+	  hl->done_thar++;
+	  hl->done_idnum=hl->frame[hl->num-1].idnum;
+	}
+	
+      }
+	
       if(aql_flag){
 	iraf_obj(hl, hl->num-1, hl->frame[hl->num-1].idnum);
+	hl->done_idnum=hl->frame[hl->num-1].idnum;
       }
     }
   }

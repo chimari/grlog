@@ -102,7 +102,7 @@ int scp_write_remote(typHLOG *hl, gchar *result_file){
       return(-1);
     }
 
-    dialog = gtk_dialog_new_with_buttons("HDS Log Editor : Sftp failed",
+    dialog = gtk_dialog_new_with_buttons("GAOES-RV Log Editor : Sftp failed",
 					 GTK_WINDOW(hl->w_top),
 					 GTK_DIALOG_MODAL,
 #ifdef USE_GTK3
@@ -323,7 +323,7 @@ int scp_write_cal(typHLOG *hl){
       return(-1);
     }
 
-    dialog = gtk_dialog_new_with_buttons("HDS Log Editor : Sftp failed",
+    dialog = gtk_dialog_new_with_buttons("GAOES-RV Log Editor : Sftp failed",
 					 GTK_WINDOW(hl->w_top),
 					 GTK_DIALOG_MODAL,
 #ifdef USE_GTK3
