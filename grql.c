@@ -2283,7 +2283,7 @@ void iraf_thar_obj(typHLOG *hl, gint i_sel, gint i_file){
 		      hl->ql_ge_edx,
 		      hl->ql_blaze,
 		      hl->ql_mask,
-		      hl->ql_line);
+		      -1);
 
 
   if(debug_flg){
