@@ -1,4 +1,5 @@
 void popup_message(GtkWidget *parent, gchar* stock_id,gint delay, ...);
+gboolean popup_dialog(GtkWidget *parent, gchar* stock_id, ...);
 
 void edit_ap();
 void edit_flat();
@@ -29,3 +30,7 @@ void ql_param_red();
 
 void check_reference_data();
 void prepare_pyraf();
+void clear_ql();
+
+void iraf_thar_obj();
+void iraf_obj();

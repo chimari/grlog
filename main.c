@@ -23,7 +23,6 @@ void write_msmtprc();
 void ChildTerm();
 static void cc_get_note ();
 
-void refresh_table ();
 gboolean create_lock ();
 static void remove_lock ();
 static void wait_lock ();
@@ -31,8 +30,6 @@ static void load_note ();
 
 void update_frame_tree();
 int printfits();
-gint ql_ext_check();
-void ql_ext_play();
 void ext_play();
 gint scan_command();
 gint printdir();
@@ -41,6 +38,9 @@ void splot_help();
 void show_version();
 
 gboolean check_scan ();
+gboolean start_scan_command();
+
+void push_all_comment();
 
 void do_save();
 void do_load();
@@ -79,7 +79,7 @@ void check_reduced_spectra(typHLOG *hl){
   for(i=0;i<hl->num;i++){
     refresh=FALSE;
     if(hl->frame[i].qlr!=QLR_DONE){
-      tmp=g_strdup_printf("%s%sG%08docs_ecfw_1d.fits",
+      tmp=g_strdup_printf("%s%sG%08ldocs_ecfw_1d.fits",
 			  hl->wdir,
 			  G_DIR_SEPARATOR_S,
 			  hl->frame[i].idnum);
@@ -104,7 +104,7 @@ int copy_file(gchar *src, gchar *dest)
   gchar *buf;
   gint n_read;
 
-  if(strcmp(src,dest)==0) return;
+  if(strcmp(src,dest)==0) return(-1);
   
   buf=g_malloc0(sizeof(gchar)*1024);
 
@@ -542,7 +542,7 @@ void refresh_table (GtkWidget *widget, gpointer gdata)
 gboolean create_lock (typHLOG *hl){
   gchar lockfile[256];
 
-  if(!hl->upd_flag) return;
+  if(!hl->upd_flag) return(FALSE);
 
   sprintf(lockfile,"%s%sgrlog-%04d%02d%02d-%s.lock",
 	  g_get_tmp_dir(),G_DIR_SEPARATOR_S, 
@@ -1397,7 +1397,7 @@ void update_frame_tree(typHLOG *hl, gboolean force_flg){
       hl->next_note=NULL;
     }
 
-    tmp=g_strdup_printf("%08d",
+    tmp=g_strdup_printf("%08ld",
 			hl->frame[hl->num-1].idnum+1);
     gtk_entry_set_text(GTK_ENTRY(hl->e_next),tmp);
     g_free(tmp);
@@ -1544,7 +1544,7 @@ int printfits(typHLOG *hl, char *inf){
 
   fits_open_file(&fptr, inf, READONLY, &status);
   fits_read_key_str(fptr, "FRAMEID", frame_id, 0, &status);
-  if(!strncmp(frame_id,"GRA9999",7)) return;
+  if(!strncmp(frame_id,"GRA9999",7)) return(0);
 
   if(strcmp(hl->last_frame_id,frame_id)!=0){
     idnum_tmp=atol(frame_id+5);
@@ -1554,7 +1554,7 @@ int printfits(typHLOG *hl, char *inf){
       cp=frame_id+5;
       hl->frame[hl->num].idnum=atol(cp);
       
-      tmp=g_strdup_printf("%s%sG%08docs_ecfw.fits",
+      tmp=g_strdup_printf("%s%sG%08ldocs_ecfw.fits",
 			  hl->wdir,
 			  G_DIR_SEPARATOR_S,
 			  hl->frame[hl->num].idnum);
@@ -1798,7 +1798,7 @@ void SendMail(GtkWidget *w, gpointer gdata){
   typHLOG *hl;
   FILE *fp;
   gchar filename[256];
-  gchar sub[256];
+  gchar sub[128];
   gchar command_line[512];
 
   hl=(typHLOG *)gdata;
@@ -1837,11 +1837,11 @@ void abrt_handler(int sig) {
 gint ql_ext_check(typHLOG *hl)
 {
   int cur_id=0;
-  gint ret;
+  gint ret, fret;
   FILE *fp;
 
   if((fp=fopen(hl->ql_lock,"r"))!=NULL){
-    fscanf(fp, "%d", &cur_id);
+    fret=fscanf(fp, "%d", &cur_id);
     fclose(fp);
     
     if(cur_id>0){
@@ -2754,7 +2754,7 @@ gint printdir(typHLOG *hl){
   struct dirent *entry;
   struct stat statbuf;
   int newflag=0;
-  int i,n;
+  int i,n, cret;
   int i_entry=0;
   GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(hl->frame_tree));
 
@@ -2768,7 +2768,7 @@ gint printdir(typHLOG *hl){
     }
   }
   
-  chdir(hl->ddir);
+  cret=chdir(hl->ddir);
   
   while(((entry=readdir(dp))!=NULL)&&(i_entry<MAX_ENTRY)){
     stat(entry->d_name,&statbuf);
@@ -2819,7 +2819,7 @@ gint printdir(typHLOG *hl){
     return (-1);
   }
   
-  chdir("..");
+  cret=chdir("..");
   closedir(dp);
 
   if(debug_flg){
@@ -4149,6 +4149,8 @@ int main(int argc, char* argv[]){
   hl->ql_st_x=GAOES_ST_X;
   hl->ql_ed_x=GAOES_ED_X;
 
+  hl->ql_err=0;
+  
   hl->ql_line=2;
   hl->ql_ge_line=2;
   hl->ql_ge_stx=2150;
@@ -4163,7 +4165,7 @@ int main(int argc, char* argv[]){
 			      G_DIR_SEPARATOR_S,
 			      hl->uname);
   if(access(hl->ql_lock,F_OK)==0){
-    printf(stderr,"!!! Lock file for quick look \"%s\" exists. Removed. !!!\n",
+    fprintf(stderr,"!!! Lock file for quick look \"%s\" exists. Removed. !!!\n",
 	   hl->ql_lock);
     unlink(hl->ql_lock);
   }

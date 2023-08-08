@@ -21,6 +21,7 @@
 #include<sys/wait.h>
 #include<errno.h>
 #include<fcntl.h>
+#include <ctype.h>
 
 #include<unistd.h>
 #include<dirent.h>
@@ -79,6 +80,8 @@
 
 #define QL_PYTHON "python3"
 #define QL_TERMINAL "xterm -geometry 85x10 -e"
+
+#define QL_ERROR_THRESHOLD 3
 
 #define AUTO_FLAT0    5
 #define AUTO_FLAT_NUM 20
@@ -585,14 +588,16 @@ struct _typHLOG{
   gchar *ql_ap_new;
   gchar *ql_mask_new;
   gchar *ql_blaze_new;
-  gint *ql_st_x;
-  gint *ql_ed_x;
+  gint ql_st_x;
+  gint ql_ed_x;
 
   gchar *ql_lock;
   gint ql_timer;
   gint ql_loop;
   gint ql_i;
 
+  gint ql_err;
+  
   gint ql_line;
   gint ql_ge_line;
   gint ql_ge_stx;
@@ -640,6 +645,7 @@ struct _typHLOG{
 };
 
 
+void refresh_table ();
 void check_reduced_spectra();
 int copy_file();
 
@@ -669,3 +675,7 @@ int http_c_fcdb_new();
 void update_seimei_log();
 void save_cfg_cal();
 void check_ql_finish();
+
+void ql_ext_play();
+gint ql_ext_check();
+gint get_cnt();

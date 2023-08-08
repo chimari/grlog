@@ -1,11 +1,19 @@
 #include "main.h"
 
 #define BUFFSIZE 256
+void finish_obj();
+void finish_thar();
+void finish_flat();
+void finish_blaze();
+void finish_mask();
 
 gint flat_ow_check;
 extern gboolean debug_flg;
 
 void check_ql_finish(typHLOG *hl){
+  if(debug_flg){
+    fprintf(stderr,"!!!CheckQL Finish...\n");
+  }
   switch(hl->ql_loop){
   case QL_THAR:
     finish_thar(hl);
@@ -50,14 +58,13 @@ gboolean check_ql(gpointer gdata){
     
     hl->ql_timer=-1;
     return(FALSE);
-    
-    return(FALSE);
   }
 }
 
 
 void check_db_dir(gchar *wdir){
   gchar *db_dir, *com;
+  gint sret;
   db_dir=g_strconcat(wdir,
 		     G_DIR_SEPARATOR_S,
 		     "database",
@@ -66,7 +73,7 @@ void check_db_dir(gchar *wdir){
     com=g_strconcat("mkdir ",
 		    db_dir,
 		    NULL);
-    system(com);
+    sret=system(com);
     g_free(com);
   }
   
@@ -873,6 +880,67 @@ gboolean wait_for_file(typHLOG *hl, gchar *msg){
 }
 
 
+void clear_ql(typHLOG *hl){
+  gboolean ret;
+  
+  hl->ql_err++;
+  
+  if(hl->ql_err<QL_ERROR_THRESHOLD){
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-warning", 
+#else
+		  GTK_STOCK_DIALOG_WARNING,
+#endif
+		  -1,
+		  "Another reduction process is still running.",
+		  " ",
+		  "Please close it before creating a new reduction session.",
+		  NULL);
+  }
+  else{
+    ret=popup_dialog(hl->w_top, 
+#ifdef USE_GTK3
+		     "dialog-question", 
+#else
+		     GTK_STOCK_DIALOG_QUESTION,
+#endif
+		     "Another reduction process is still running.",
+		     " ",
+		     "<b>Do you want to remove the lock file?</b>:",
+		     NULL);
+
+    if(ret){
+      hl->ql_err=0;
+
+      if(access(hl->ql_lock,F_OK)==0){
+	if(hl->ql_timer>0){
+	  g_source_remove(hl->ql_timer);
+	  hl->ql_timer=-1;
+	}
+	
+	unlink(hl->ql_lock);
+	
+	popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		      "dialog-information", 
+#else
+		      GTK_STOCK_DIALOG_INFO,
+#endif
+		      POPUP_TIMEOUT,
+		      "The QL lock-file has been Removed ",
+		      " ",
+		      "Please run a new reduction process.",
+		  NULL);
+      }
+    }
+    else{
+      hl->ql_err++;
+    }
+  }
+}
+
+
 gboolean popup_dialog(GtkWidget *parent, gchar* stock_id, ...){
   va_list args;
   gchar *msg1;
@@ -1162,7 +1230,7 @@ gboolean ow_check(typHLOG *hl, gchar* file_in){
   }
 
   if(GTK_IS_WIDGET(dialog)) gtk_widget_destroy(dialog);
-  while(g_main_iteration(FALSE));
+  //while(g_main_iteration(FALSE));
 
   g_free(filename);
   return(ret);
@@ -1196,17 +1264,17 @@ gchar *get_indir(typHLOG *hl, gint i){
 
 
 
-gint get_cnt(typHLOG *hl, gint i_file){
+gint get_cnt(typHLOG *hl, glong i_file){
   gchar *cnt_file;
   FILE *fp;
-  gint ret=-1;
+  gint ret=-1, fret;
 
   cnt_file=g_strdup_printf("%s%sG%08ld_cnt",
 			   hl->wdir,
 			   G_DIR_SEPARATOR_S,
 			   hl->frame[i_file].idnum);
   if((fp=fopen(cnt_file, "r"))!=NULL){
-    fscanf(fp, "%d", &ret);
+    fret=fscanf(fp, "%d", &ret);
     fclose(fp);
   }
 
@@ -1214,31 +1282,22 @@ gint get_cnt(typHLOG *hl, gint i_file){
   return(ret);
 }
 
-void iraf_obj(typHLOG *hl, gint i_sel, gint i_file){
+void iraf_obj(typHLOG *hl, gint i_sel, glong i_file){
   gchar *tmp; 
 
   switch(ql_ext_check(hl)){
   case -1:
-    popup_message(hl->w_top, 
-#ifdef USE_GTK3
-		  "dialog-warning", 
-#else
-		  GTK_STOCK_DIALOG_WARNING,
-#endif
-		  -1,
-		  "Another reduction process is still running.",
-		  " ",
-		  "Please close it before creating a new reduction session.",
-		  NULL);
+    clear_ql(hl);
     return;
     break;
     
   case 0:
   case 1:
+    hl->ql_err=0;
     break;
   }
 
-  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s \"%08d\" %s %s %s %s %s %d %d %d %d %d %s %s %d\'",
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s \"%08ld\" %s %s %s %s %s %d %d %d %d %d %s %s %d\'",
 		      hl->ql_terminal,
 		      hl->wdir,
 		      hl->ql_python,
@@ -1281,22 +1340,13 @@ void iraf_obj_splot(typHLOG *hl, gint i_sel, gchar *spec_file){
 
   switch(ql_ext_check(hl)){
   case -1:
-    popup_message(hl->w_top, 
-#ifdef USE_GTK3
-		  "dialog-warning", 
-#else
-		  GTK_STOCK_DIALOG_WARNING,
-#endif
-		  -1,
-		  "Another reduction process is still running.",
-		  " ",
-		  "Please close it before creating a new reduction session.",
-		  NULL);
+    clear_ql(hl);
     return;
     break;
     
   case 0:
   case 1:
+    hl->ql_err=0;
     break;
   }
 
@@ -1324,34 +1374,36 @@ void iraf_obj_splot(typHLOG *hl, gint i_sel, gchar *spec_file){
   g_free(tmp);
 }
 
-void iraf_obj_batch(typHLOG *hl, gint i_sel, gint i_file, gchar *obj_in){
+void iraf_obj_batch(typHLOG *hl, gint i_sel, glong i_file, gchar *obj_in){
   gchar *tmp;
+  gint sret;
 
-  tmp=g_strdup_printf("echo %08d >> %s",
+  tmp=g_strdup_printf("echo %08ld >> %s",
 		      i_file,
 		      obj_in);
 
-  system(tmp);
+  sret=system(tmp);
   g_free(tmp);
 }
 
 void ql_obj_foreach (GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, gpointer gdata)
 {
   typHLOG *hl=(typHLOG *)gdata;
-  gint i, i_file;
+  gint i;
+  glong i_file;
   gchar *tmp;
     
   gtk_tree_model_get (model, iter, COLUMN_FRAME_NUMBER, &i, -1);
 
   
   if(hl->ql_line<0){
-    tmp=g_strdup_printf("G%08docs_ecfw",hl->frame[i].idnum);
+    tmp=g_strdup_printf("G%08ldocs_ecfw",hl->frame[i].idnum);
     if(ow_check(hl, tmp)){
       iraf_obj(hl, i, hl->frame[i].idnum);
     }
   }
   else if(hl->ql_line==0){
-    tmp=g_strdup_printf("G%08docs_ecfw_1d",hl->frame[i].idnum);
+    tmp=g_strdup_printf("G%08ldocs_ecfw_1d",hl->frame[i].idnum);
     if(ow_check(hl, tmp)){
       iraf_obj(hl, i, hl->frame[i].idnum);
     }
@@ -1360,7 +1412,7 @@ void ql_obj_foreach (GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, 
     }
   }
   else{
-    tmp=g_strdup_printf("G%08docs_ecfw",hl->frame[i].idnum);
+    tmp=g_strdup_printf("G%08ldocs_ecfw",hl->frame[i].idnum);
     if(ow_check(hl, tmp)){
       iraf_obj(hl, i, hl->frame[i].idnum);
     }
@@ -1376,7 +1428,8 @@ void ql_obj_batch_foreach (GtkTreeModel *model, GtkTreePath *path,
 			   GtkTreeIter *iter, gpointer gdata)
 {
   typHLOG *hl=(typHLOG *)gdata;
-  gint i, i_file;
+  gint i;
+  glong i_file;
   gchar *obj_in;
 
   gtk_tree_model_get (model, iter, COLUMN_FRAME_NUMBER, &i, -1);
@@ -1395,22 +1448,13 @@ void make_obj_batch(typHLOG *hl, gchar *obj_in){
 
   switch(ql_ext_check(hl)){
   case -1:
-    popup_message(hl->w_top, 
-#ifdef USE_GTK3
-		  "dialog-warning", 
-#else
-		  GTK_STOCK_DIALOG_WARNING,
-#endif
-		  -1,
-		  "Another reduction process is still running.",
-		  " ",
-		  "Please close it before creating a new reduction session.",
-		  NULL);
+    clear_ql(hl);
     return;
     break;
     
   case 0:
   case 1:
+    hl->ql_err=0;
     break;
   }
 
@@ -1455,23 +1499,6 @@ void ql_obj_red(GtkWidget *w, gpointer gdata){
   GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(hl->frame_tree));
   gint i_rows;
 
-  /*
-  if(hl->ql_timer>0){
-    popup_message(hl->w_top, 
-#ifdef USE_GTK3
-		  "dialog-warning", 
-#else
-		  GTK_STOCK_DIALOG_WARNING,
-#endif
-		  -1,
-		  "Another reduction process is still running.",
-		  " ",
-		  "Please close it before creating a new reduction session.",
-		  " ",
-		  NULL);
-    return;
-    } */   
-
   i_rows=gtk_tree_selection_count_selected_rows (selection);
 
   if(i_rows==1){
@@ -1513,9 +1540,10 @@ void ql_obj_red(GtkWidget *w, gpointer gdata){
 ///////////////// Flat ///////////////////
 
 
-void iraf_flat(typHLOG *hl, gint i_sel, gint i_file, gchar *flat_in){
+void iraf_flat(typHLOG *hl, gint i_sel, glong i_file, gchar *flat_in){
   gchar *tmp;
   gchar *ap_bak, *src, *dest;
+  gint sret;
 
   if(strcmp(hl->frame[i_sel].type,"FLAT")!=0){
     popup_message(hl->w_top, 
@@ -1532,10 +1560,10 @@ void iraf_flat(typHLOG *hl, gint i_sel, gint i_file, gchar *flat_in){
   }
 
   if(!hl->ql_flat_new){
-    hl->ql_flat_new=g_strdup_printf("Flat.%08d", i_file);
+    hl->ql_flat_new=g_strdup_printf("Flat.%08ld", i_file);
   }
   if(!hl->ql_ap_new){
-    hl->ql_ap_new=g_strdup_printf("Ap.%08d", i_file);
+    hl->ql_ap_new=g_strdup_printf("Ap.%08ld", i_file);
 
     // Check Redo
     if(strcmp(hl->ql_ap_new,hl->ql_ap)==0){
@@ -1583,11 +1611,11 @@ void iraf_flat(typHLOG *hl, gint i_sel, gint i_file, gchar *flat_in){
   
   hl->frame[i_sel].cal=QLCAL_FLAT0;
   
-  tmp=g_strdup_printf("echo %08d >> %s",
+  tmp=g_strdup_printf("echo %08ld >> %s",
 		      i_file,
 		      flat_in);
 
-  system(tmp);
+  sret=system(tmp);
   g_free(tmp);
 }
 
@@ -1595,6 +1623,10 @@ void iraf_flat(typHLOG *hl, gint i_sel, gint i_file, gchar *flat_in){
 void finish_flat(typHLOG *hl){
   gchar *tmp, *tmp_ap, *tmp_flat;
   gint i;
+
+  if(debug_flg){
+    fprintf(stderr,"Checking Finish of Flat...\n");
+  }
 
   tmp=g_strconcat(hl->wdir,
 		  G_DIR_SEPARATOR_S,
@@ -1618,7 +1650,7 @@ void finish_flat(typHLOG *hl){
 #else
 		  GTK_STOCK_DIALOG_INFO,
 #endif
-		  -1,
+		  POPUP_TIMEOUT*2,
 		  "A new Flat frame has been successfully created and set for QL.",
 		  " ",
 		  tmp_flat,
@@ -1673,7 +1705,7 @@ void finish_flat(typHLOG *hl){
 #else
 		  GTK_STOCK_DIALOG_INFO,
 #endif
-		  -1,
+		  POPUP_TIMEOUT*2,
 		  "A new Aperture reference has been successfully created and set for QL.",
 		  " ",
 		  tmp_ap,
@@ -1704,22 +1736,13 @@ void make_flat(typHLOG *hl, gchar *flat_in){
 
   switch(ql_ext_check(hl)){
   case -1:
-    popup_message(hl->w_top, 
-#ifdef USE_GTK3
-		  "dialog-warning", 
-#else
-		  GTK_STOCK_DIALOG_WARNING,
-#endif
-		  -1,
-		  "Another reduction process is still running.",
-		  " ",
-		  "Please close it before creating a new reduction session.",
-		  NULL);
+    clear_ql(hl);
     return;
     break;
     
   case 0:
   case 1:
+    hl->ql_err=0;
     break;
   }
 
@@ -1776,22 +1799,6 @@ void ql_flat_red(GtkWidget *w, gpointer gdata){
   GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(hl->frame_tree));
   gint i_rows;
 
-  /*
-  if(hl->ql_timer>0){
-    popup_message(hl->w_top, 
-#ifdef USE_GTK3
-		  "dialog-warning", 
-#else
-		  GTK_STOCK_DIALOG_WARNING,
-#endif
-		  -1,
-		  "Another reduction process is still running.",
-		  " ",
-		  "Please close it before creating a new reduction session.",
-		  NULL);
-    return;
-    } */   
-
   i_rows=gtk_tree_selection_count_selected_rows (selection);
 
   if(hl->ql_ap_new) g_free(hl->ql_ap_new);
@@ -1831,16 +1838,17 @@ void ql_flat_red(GtkWidget *w, gpointer gdata){
 void iraf_flat_auto(typHLOG *hl){
   gchar *flat_in;
   gchar *ap_bak, *src, *dest;
-  gint i, i_sel, i_file;
+  gint i, i_sel;
+  glong i_file;
   FILE *fp;
 
   i_file=hl->frame[hl->auto_flat[0]].idnum;
 
   if(!hl->ql_flat_new){
-    hl->ql_flat_new=g_strdup_printf("Flat.%08d", i_file);
+    hl->ql_flat_new=g_strdup_printf("Flat.%08ld", i_file);
   }
   if(!hl->ql_ap_new){
-    hl->ql_ap_new=g_strdup_printf("Ap.%08d", i_file);
+    hl->ql_ap_new=g_strdup_printf("Ap.%08ld", i_file);
 
     // Check Redo
     if(strcmp(hl->ql_ap_new,hl->ql_ap)==0){
@@ -1929,6 +1937,10 @@ void finish_thar(typHLOG *hl){
   gchar *tmp;
   gchar *tmp_1d, *tmp_2d;
   gint i;
+
+  if(debug_flg){
+    fprintf(stderr,"Checking Finish of ThAr...\n");
+  }
   
   tmp=g_strconcat(hl->wdir,
 		  G_DIR_SEPARATOR_S,
@@ -1951,7 +1963,7 @@ void finish_thar(typHLOG *hl){
 #else
 		  GTK_STOCK_DIALOG_INFO,
 #endif
-		  -1,
+		  POPUP_TIMEOUT*2,
 		  "New Comarison frames have been successfully created and set for QL.",
 		  " ",
 		  tmp_2d,
@@ -1979,7 +1991,7 @@ void finish_thar(typHLOG *hl){
 		  -1,
 		  tmp,
 		  " ",
-		  "Failed to create new Comparison frames.",
+		  "Failed to create a new Comparison frame.",
 		  NULL);
     for(i=0;i<hl->num;i++){
       if(hl->frame[i].cal==QLCAL_COMP0){
@@ -2013,7 +2025,7 @@ void finish_mask(typHLOG *hl){
 #else
 		  GTK_STOCK_DIALOG_INFO,
 #endif
-		  -1,
+		  POPUP_TIMEOUT*2,
 		  "A new Mask image has been successfully created and set for QL.",
 		  " ",
 		  tmp_mask,
@@ -2056,7 +2068,7 @@ void finish_blaze(typHLOG *hl){
 #else
 		  GTK_STOCK_DIALOG_INFO,
 #endif
-		  -1,
+		  POPUP_TIMEOUT*2,
 		  "A new Blaze function has been successfully created and set for QL.",
 		  " ",
 		  tmp_blaze,
@@ -2079,28 +2091,19 @@ void finish_blaze(typHLOG *hl){
 }
 
   
-void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
+void iraf_thar(typHLOG *hl, gint i_sel, glong i_file){
   gchar *tmp, *tmp_thar1d;
   gchar *thar_bak, *src, *dest;
 
   switch(ql_ext_check(hl)){
   case -1:
-    popup_message(hl->w_top, 
-#ifdef USE_GTK3
-		  "dialog-warning", 
-#else
-		  GTK_STOCK_DIALOG_WARNING,
-#endif
-		  -1,
-		  "Another reduction process is still running.",
-		  " ",
-		  "Please close it before creating a new reduction session.",
-		  NULL);
+    clear_ql(hl);
     return;
     break;
     
   case 0:
   case 1:
+    hl->ql_err=0;
     break;
   }
 
@@ -2118,7 +2121,7 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
   }
   
   if(hl->ql_thar_new) g_free(hl->ql_thar_new);
-  hl->ql_thar_new=g_strdup_printf("ThAr.%08d", hl->frame[i_sel].idnum);
+  hl->ql_thar_new=g_strdup_printf("ThAr.%08ld", hl->frame[i_sel].idnum);
   tmp_thar1d=g_strdup_printf("%s.center",hl->ql_thar_new);
 
   // Check Redo
@@ -2156,7 +2159,7 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
   
   hl->frame[i_sel].cal=QLCAL_COMP0;
 
-  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s \"%08d\" %s %s %s %s\'",
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s \"%08ld\" %s %s %s %s\'",
 		      hl->ql_terminal,
 		      hl->wdir,
 		      hl->ql_python,
@@ -2185,28 +2188,19 @@ void iraf_thar(typHLOG *hl, gint i_sel, gint i_file){
 }
 
 
-void iraf_thar_obj(typHLOG *hl, gint i_sel, gint i_file){
+void iraf_thar_obj(typHLOG *hl, gint i_sel, glong i_file){
   gchar *tmp, *tmp_thar1d;
   gchar *thar_bak, *src, *dest;
 
   switch(ql_ext_check(hl)){
   case -1:
-    popup_message(hl->w_top, 
-#ifdef USE_GTK3
-		  "dialog-warning", 
-#else
-		  GTK_STOCK_DIALOG_WARNING,
-#endif
-		  -1,
-		  "Another reduction process is still running.",
-		  " ",
-		  "Please close it before creating a new reduction session.",
-		  NULL);
+    clear_ql(hl);
     return;
     break;
     
   case 0:
   case 1:
+    hl->ql_err=0;
     break;
   }
 
@@ -2224,7 +2218,7 @@ void iraf_thar_obj(typHLOG *hl, gint i_sel, gint i_file){
   }
   
   if(hl->ql_thar_new) g_free(hl->ql_thar_new);
-  hl->ql_thar_new=g_strdup_printf("ThAr.%08d", hl->frame[i_sel].idnum);
+  hl->ql_thar_new=g_strdup_printf("ThAr.%08ld", hl->frame[i_sel].idnum);
   tmp_thar1d=g_strdup_printf("%s.center",hl->ql_thar_new);
 
   // Check Redo
@@ -2262,7 +2256,7 @@ void iraf_thar_obj(typHLOG *hl, gint i_sel, gint i_file){
   
   hl->frame[i_sel].cal=QLCAL_COMP0;
 
-  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s \"%08d\" %s %s %s %s %s %d %d %d %d %d %s %s %d\'",
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s \"%08ld\" %s %s %s %s %s %d %d %d %d %d %s %s %d\'",
 		      hl->ql_terminal,
 		      hl->wdir,
 		      hl->ql_python,
@@ -2301,31 +2295,22 @@ void iraf_thar_obj(typHLOG *hl, gint i_sel, gint i_file){
 }
 
 
-void iraf_mask(typHLOG *hl, gint i_sel, gint i_file){
+void iraf_mask(typHLOG *hl, gint i_sel, glong i_file){
   gchar *tmp, *tmp2; 
 
   switch(ql_ext_check(hl)){
   case -1:
-    popup_message(hl->w_top, 
-#ifdef USE_GTK3
-		  "dialog-warning", 
-#else
-		  GTK_STOCK_DIALOG_WARNING,
-#endif
-		  -1,
-		  "Another reduction process is still running.",
-		  " ",
-		  "Please close it before creating a new reduction session.",
-		  NULL);
+    clear_ql(hl);
     return;
     break;
     
   case 0:
   case 1:
+    hl->ql_err=0;
     break;
   }
 
-  tmp=g_strdup_printf("%s%sG%08docs_ecfw.fits",
+  tmp=g_strdup_printf("%s%sG%08ldocs_ecfw.fits",
 		      hl->wdir,
 		      G_DIR_SEPARATOR_S,
 		      hl->frame[i_sel].idnum);
@@ -2351,9 +2336,9 @@ void iraf_mask(typHLOG *hl, gint i_sel, gint i_file){
   g_free(tmp);
 
   if(hl->ql_mask_new) g_free(hl->ql_mask_new);
-  hl->ql_mask_new=g_strdup_printf("Mask.%08d", hl->frame[i_sel].idnum);
+  hl->ql_mask_new=g_strdup_printf("Mask.%08ld", hl->frame[i_sel].idnum);
 
-  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s G%08docs_ecfw %s\'",
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s G%08ldocs_ecfw %s\'",
 		      hl->ql_terminal,
 		      hl->wdir,
 		      hl->ql_python,
@@ -2378,27 +2363,18 @@ void iraf_mask(typHLOG *hl, gint i_sel, gint i_file){
 }
 
 
-void iraf_blaze(typHLOG *hl, gint i_sel, gint i_file){
+void iraf_blaze(typHLOG *hl, gint i_sel, glong i_file){
   gchar *tmp, *tmp2; 
 
   switch(ql_ext_check(hl)){
   case -1:
-    popup_message(hl->w_top, 
-#ifdef USE_GTK3
-		  "dialog-warning", 
-#else
-		  GTK_STOCK_DIALOG_WARNING,
-#endif
-		  -1,
-		  "Another reduction process is still running.",
-		  " ",
-		  "Please close it before creating a new reduction session.",
-		  NULL);
+    clear_ql(hl);
     return;
     break;
     
   case 0:
   case 1:
+    hl->ql_err=0;
     break;
   }
 
@@ -2415,7 +2391,7 @@ void iraf_blaze(typHLOG *hl, gint i_sel, gint i_file){
     return;
   }
   
-  tmp=g_strdup_printf("%s%sG%08docs_ecfw.fits",
+  tmp=g_strdup_printf("%s%sG%08ldocs_ecfw.fits",
 		      hl->wdir,
 		      G_DIR_SEPARATOR_S,
 		      hl->frame[i_sel].idnum);
@@ -2441,9 +2417,9 @@ void iraf_blaze(typHLOG *hl, gint i_sel, gint i_file){
   g_free(tmp);
 
   if(hl->ql_blaze_new) g_free(hl->ql_blaze_new);
-  hl->ql_blaze_new=g_strdup_printf("cBlaze.%08d", hl->frame[i_sel].idnum);
+  hl->ql_blaze_new=g_strdup_printf("cBlaze.%08ld", hl->frame[i_sel].idnum);
 
-  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s G%08docs_ecfw %s %s\'",
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s G%08ldocs_ecfw %s %s\'",
 		      hl->ql_terminal,
 		      hl->wdir,
 		      hl->ql_python,
@@ -2473,7 +2449,8 @@ void ql_thar_foreach (GtkTreeModel *model, GtkTreePath *path,
 		    GtkTreeIter *iter, gpointer gdata)
 {
   typHLOG *hl=(typHLOG *)gdata;
-  gint i, i_file;
+  gint i;
+  glong i_file;
   gchar *c;
     
   gtk_tree_model_get (model, iter, COLUMN_FRAME_NUMBER, &i, -1);
@@ -2485,7 +2462,8 @@ void ql_mask_foreach (GtkTreeModel *model, GtkTreePath *path,
 		    GtkTreeIter *iter, gpointer gdata)
 {
   typHLOG *hl=(typHLOG *)gdata;
-  gint i, i_file;
+  gint i;
+  glong i_file;
   gchar *c;
     
   gtk_tree_model_get (model, iter, COLUMN_FRAME_NUMBER, &i, -1);
@@ -2498,7 +2476,8 @@ void ql_blaze_foreach (GtkTreeModel *model, GtkTreePath *path,
 		    GtkTreeIter *iter, gpointer gdata)
 {
   typHLOG *hl=(typHLOG *)gdata;
-  gint i, i_file;
+  gint i;
+  glong i_file;
   gchar *c;
     
   gtk_tree_model_get (model, iter, COLUMN_FRAME_NUMBER, &i, -1);
@@ -2515,22 +2494,6 @@ void ql_thar_red(GtkWidget *w, gpointer gdata){
   GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(hl->frame_tree));
   gint i_rows;
   gint tmp_scr=hl->scr_flag;
-
-  /*
-  if(hl->ql_timer>0){
-    popup_message(hl->w_top, 
-#ifdef USE_GTK3
-		  "dialog-warning", 
-#else
-		  GTK_STOCK_DIALOG_WARNING,
-#endif
-		  -1,
-		  "Another reduction process is still running.",
-		  " ",
-		  "Please close it before creating a new reduction session.",
-		  NULL);
-    return;
-    } */   
 
   i_rows=gtk_tree_selection_count_selected_rows (selection);
 
@@ -2566,22 +2529,6 @@ void ql_mask(GtkWidget *w, gpointer gdata){
   gint i_rows;
   gint tmp_scr=hl->scr_flag;
 
-  /*
-  if(hl->ql_timer>0){
-    popup_message(hl->w_top, 
-#ifdef USE_GTK3
-		  "dialog-warning", 
-#else
-		  GTK_STOCK_DIALOG_WARNING,
-#endif
-		  -1,
-		  "Another reduction process is still running.",
-		  " ",
-		  "Please close it before creating a new reduction session.",
-		  NULL);
-    return;
-    } */   
-
   i_rows=gtk_tree_selection_count_selected_rows (selection);
 
   if(i_rows==1){
@@ -2616,22 +2563,6 @@ void ql_blaze(GtkWidget *w, gpointer gdata){
   GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(hl->frame_tree));
   gint i_rows;
   gint tmp_scr=hl->scr_flag;
-
-  /*
-  if(hl->ql_timer>0){
-    popup_message(hl->w_top, 
-#ifdef USE_GTK3
-		  "dialog-warning", 
-#else
-		  GTK_STOCK_DIALOG_WARNING,
-#endif
-		  -1,
-		  "Another reduction process is still running.",
-		  " ",
-		  "Please close it before creating a new reduction session.",
-		  NULL);
-    return;
-    } */   
 
   i_rows=gtk_tree_selection_count_selected_rows (selection);
 
