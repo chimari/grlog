@@ -110,12 +110,12 @@ int copy_file(gchar *src, gchar *dest)
 
 
   if ((src_fp = fopen(src, "rb")) == NULL) {
-    g_print("Cannot open copy source file %s",src);
+    g_print("Cannot open copy source file %s\n",src);
     return(-1);
   }
 
   if ((dest_fp = fopen(dest, "wb")) == NULL) {
-    g_print("Cannot open copy destination file %s",dest);
+    g_print("Cannot open copy destination file %s\n",dest);
     return(-1);
   }
 
@@ -760,7 +760,7 @@ void load_cfg_cal (typHLOG *hl)
 {
   ConfigFile *cfgfile;
   gchar *filename;
-  gchar *c_buf;
+  gchar *c_buf,*c_buf2;
   gchar *sdir=NULL;
   gchar *src;
   gchar *ap_fits0, *ec_fits0, *ap_db0, *ec_db0;
@@ -949,18 +949,18 @@ void load_cfg_cal (typHLOG *hl)
     }
 
     if(xmms_cfg_read_string(cfgfile, "LastCAL",
-			    "ThAr2D",&c_buf)){
+			    "ThAr2D",&c_buf2)){
       // ThAr 2D
       ec2_fits=g_strconcat(hl->wdir,
 			   G_DIR_SEPARATOR_S,
-			   c_buf,
+			   c_buf2,
 			   ".fits",
 			   NULL);
       if(cp_flag){
 	if(access(ec2_fits, F_OK)!=0){
 	  ec2_fits0=g_strconcat(sdir,
 				G_DIR_SEPARATOR_S,
-				c_buf,
+				c_buf2,
 				".fits",
 				NULL);
 	  copy_file(ec2_fits0, ec2_fits);
@@ -975,7 +975,7 @@ void load_cfg_cal (typHLOG *hl)
       if(hl->ql_thar1d) g_free(hl->ql_thar1d);
       hl->ql_thar1d=g_strdup(c_buf);
       if(hl->ql_thar2d) g_free(hl->ql_thar2d);
-      hl->ql_thar2d=g_strdup(c_buf);
+      hl->ql_thar2d=g_strdup(c_buf2);
     }
     
       
