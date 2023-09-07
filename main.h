@@ -605,6 +605,8 @@ struct _typHLOG{
 
   gchar *ql_python;
   gchar *ql_terminal;
+
+  gboolean check_ql1;
   
   GtkWidget *frame_ql;
   gchar *setname_red[NUM_SET];
@@ -642,6 +644,13 @@ struct _typHLOG{
   gchar *remote_dir;
 
   gint i_reduced;
+
+  GtkWidget *plabel;
+  GtkWidget *pbar2;
+  GtkWidget *plabel2;
+  GtkWidget *plabel3;
+
+  gint up_i;
 };
 
 
@@ -679,3 +688,5 @@ void check_ql_finish();
 void ql_ext_play();
 gint ql_ext_check();
 gint get_cnt();
+
+gpointer thread_upload_comment();

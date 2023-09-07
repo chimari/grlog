@@ -856,7 +856,7 @@ static void cell_canceled (GtkCellRendererText *cell)
 
 void update_seimei_log(typHLOG *hl, gint i){
   if(!hl->push_flag) return;
-  
+
   if(hl->seimei_log_id) g_free(hl->seimei_log_id);
   hl->seimei_log_id=g_strdup(hl->frame[i].id);
   
@@ -928,7 +928,13 @@ static void cell_edited (GtkCellRendererText *cell,
       }
       save_note(hl);
 
-      update_seimei_log(hl, i);
+      hl->ploop=g_main_loop_new(NULL, FALSE);
+      hl->pcancel=g_cancellable_new();
+      hl->up_i=i;
+      hl->pthread=g_thread_new("grlog_up_comment", thread_upload_comment, (gpointer)hl);
+      g_main_loop_run(hl->ploop);
+      g_main_loop_unref(hl->ploop);
+      hl->ploop=NULL;
     }
     break;
 
@@ -951,7 +957,13 @@ static void cell_edited (GtkCellRendererText *cell,
       }
       save_note(hl);
 
-      update_seimei_log(hl, i);
+      hl->ploop=g_main_loop_new(NULL, FALSE);
+      hl->pcancel=g_cancellable_new();
+      hl->up_i=i;
+      hl->pthread=g_thread_new("grlog_up_comment", thread_upload_comment, (gpointer)hl);
+      g_main_loop_run(hl->ploop);
+      g_main_loop_unref(hl->ploop);
+      hl->ploop=NULL;
     }
     break;
   }

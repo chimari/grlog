@@ -11,6 +11,8 @@ void gtkut_table_attach_defaults();
 GtkWidget * gtkut_button_new_from_icon_name();
 GtkWidget * gtkut_toggle_button_new_from_icon_name();
 GtkWidget * gtkut_image_menu_item_new_with_label();;
+void css_change_col();
+void css_change_pbar_height();
 #else
 GtkWidget * gtkut_button_new_from_stock();
 GtkWidget * gtkut_toggle_button_new_from_stock();

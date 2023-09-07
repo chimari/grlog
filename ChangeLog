@@ -1,3 +1,7 @@
+2023.09.07 ver.1.4.4  - Added progress bar for HTTP upload.
+	              - Threading for HTTP upload.
+                      - Wait lock file for the 1st reduction.
+
 2023.08.08 ver.1.4.3  - Kill junked PyRAF session.
 
 2023.08.04 ver.1.4.2  - Added comp_obj reduction for the 1st ThAr.

@@ -391,6 +391,11 @@ void cc_get_toggle (GtkWidget * widget, gboolean * gdata)
   *gdata=gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
+void cc_get_toggle_menu (GtkWidget * widget, gboolean * gdata)
+{
+  *gdata=gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget));
+}
+
 void cc_toggle_update (GtkWidget * widget, gpointer gdata)
 {
   typHLOG *hl=(typHLOG *)gdata;
@@ -2888,6 +2893,162 @@ void do_quit (GtkWidget *widget, gpointer gdata)
 }
 
 
+void create_pdialog(typHLOG *hl, GtkWidget *parent,
+		    gchar *title,
+		    gchar *markup_txt1,
+		    gchar *host_markup,
+		    gboolean flag_2p){
+  GtkWidget *label, *bar, *sep;
+  
+  hl->pdialog = gtk_dialog_new();
+  gtk_window_set_transient_for(GTK_WINDOW(hl->pdialog),GTK_WINDOW(parent));
+  gtk_window_set_modal(GTK_WINDOW(hl->pdialog),TRUE);
+  gtk_window_set_title(GTK_WINDOW(hl->pdialog),title);
+  
+  gtk_window_set_position(GTK_WINDOW(hl->pdialog), GTK_WIN_POS_CENTER);
+  gtk_container_set_border_width(GTK_CONTAINER(hl->pdialog),5);
+  gtk_container_set_border_width(GTK_CONTAINER(gtk_dialog_get_content_area(GTK_DIALOG(hl->pdialog))),5);
+  gtk_window_set_decorated(GTK_WINDOW(hl->pdialog),TRUE);
+  
+  label=gtkut_label_new(markup_txt1);
+#ifdef USE_GTK3
+  gtk_widget_set_halign (label, GTK_ALIGN_START);
+  gtk_widget_set_valign (label, GTK_ALIGN_CENTER);
+#else
+  gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
+#endif
+  gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(hl->pdialog))),
+		     label,TRUE,TRUE,0);
+  gtk_widget_show(label);
+  
+  if(flag_2p){
+    hl->pbar2=gtk_progress_bar_new();
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(hl->pdialog))),
+		       hl->pbar2,TRUE,TRUE,0);
+#ifdef USE_GTK3
+    gtk_orientable_set_orientation (GTK_ORIENTABLE (hl->pbar2), 
+				    GTK_ORIENTATION_HORIZONTAL);
+    css_change_pbar_height(hl->pbar2,15);
+    gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(hl->pbar2),TRUE);
+#else
+    gtk_progress_bar_set_orientation (GTK_PROGRESS_BAR (hl->pbar2), 
+				      GTK_PROGRESS_LEFT_TO_RIGHT);
+#endif
+    gtk_widget_show(hl->pbar2);
+  }
+
+#ifdef USE_GTK3
+  bar = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+#else
+  bar = gtk_hseparator_new();
+#endif
+  gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(hl->pdialog))),
+		     bar,FALSE, FALSE, 0);
+  
+  hl->plabel=gtkut_label_new(host_markup);
+#ifdef USE_GTK3
+  gtk_widget_set_halign (hl->plabel, GTK_ALIGN_END);
+  gtk_widget_set_valign (hl->plabel, GTK_ALIGN_CENTER);
+#else
+  gtk_misc_set_alignment (GTK_MISC (hl->plabel), 1.0, 0.5);
+#endif
+  gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(hl->pdialog))),
+		     hl->plabel,FALSE,FALSE,0);
+
+#ifdef USE_GTK3
+  bar = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+#else
+  bar = gtk_hseparator_new();
+#endif
+  gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(hl->pdialog))),
+		     bar,FALSE, FALSE, 0);
+
+}
+
+
+gpointer thread_upload_comment(gpointer gdata){
+  gint i;
+  typHLOG *hl=(typHLOG *)gdata;
+
+  hl->psz=0;
+  hl->pabort=FALSE;
+
+  update_seimei_log(hl, hl->up_i);
+
+  if(hl->ploop) g_main_loop_quit(hl->ploop);
+
+  return(NULL);
+}
+
+
+static void thread_cancel_upload(GtkWidget *w, gpointer gdata)
+{
+  typHLOG *hl=(typHLOG *)gdata;
+
+  if(GTK_IS_WIDGET(hl->pdialog)) gtk_widget_unmap(hl->pdialog);
+
+  g_cancellable_cancel(hl->pcancel);
+  g_object_unref(hl->pcancel); 
+
+  hl->pabort=TRUE;
+
+  if(hl->ploop) g_main_loop_quit(hl->ploop);
+}
+
+
+void gui_push_all_comment (typHLOG *hl){
+  gint i;
+  gchar *tmp;
+  GtkWidget *button;
+
+  tmp=g_strdup_printf("Accessing to <i>%s</i>",SMOKA_LOG_HOST);
+  create_pdialog(hl,
+		 hl->w_top,
+		 "grlog : Upload Comments",
+		 "Uploading comments via HTTP",
+		 tmp,
+		 TRUE);
+  g_free(tmp);
+
+#ifdef USE_GTK3
+  button=gtkut_button_new_from_icon_name("Cancel","process-stop");
+#else
+  button=gtkut_button_new_from_stock("Cancel",GTK_STOCK_CANCEL);
+#endif
+  gtk_dialog_add_action_widget(GTK_DIALOG(hl->pdialog),button,GTK_RESPONSE_CANCEL);
+  g_signal_connect(button,"pressed",
+		   G_CALLBACK(thread_cancel_upload),
+		   (gpointer)hl);
+
+  gtk_widget_show_all(hl->pdialog);
+
+  gtk_window_set_modal(GTK_WINDOW(hl->pdialog),TRUE);
+	    
+  for(i=0;i<hl->num;i++){
+    if((hl->frame[i].note.txt)||(hl->frame[i].note.cnt>0)){
+      hl->ploop=g_main_loop_new(NULL, FALSE);
+      hl->pcancel=g_cancellable_new();
+      hl->up_i=i;
+      hl->pthread=g_thread_new("grlog_up_comment", thread_upload_comment, (gpointer)hl);
+      g_main_loop_run(hl->ploop);
+      g_main_loop_unref(hl->ploop);
+      hl->ploop=NULL;
+
+      gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(hl->pbar2),
+				    (gdouble)(i+1)/(gdouble)(hl->num));
+      tmp=g_strdup_printf("Finished [ %d / %d ] Frames",i+1,hl->num);
+      gtk_progress_bar_set_text(GTK_PROGRESS_BAR(hl->pbar2),tmp);
+      g_free(tmp);
+      
+      usleep(1e5);
+    }
+  }
+  
+  gtk_window_set_modal(GTK_WINDOW(hl->pdialog),FALSE);
+  if(GTK_IS_WIDGET(hl->pdialog)) gtk_widget_destroy(hl->pdialog);
+}
+
+
 void push_all_comment (GtkWidget *widget, gpointer gdata)
 {
   gboolean ret=FALSE;
@@ -2909,12 +3070,7 @@ void push_all_comment (GtkWidget *widget, gpointer gdata)
 		   NULL);
 
   if(ret){
-    for(i=0;i<hl->num;i++){
-      if((hl->frame[i].note.txt)||(hl->frame[i].note.cnt>0)){
-	update_seimei_log(hl, i);
-	usleep(3e5);
-      }
-    }
+    gui_push_all_comment(hl);
   }
 }
 
@@ -3125,6 +3281,10 @@ GtkWidget *make_menu(typHLOG *hl){
   gtk_container_add (GTK_CONTAINER (menu), check);
   gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(check),
 				   hl->push_flag);
+  g_signal_connect (check, "toggled",
+		    G_CALLBACK (cc_get_toggle_menu),
+		    &hl->push_flag);
+  
 
 #ifdef USE_GTK3
   image=gtk_image_new_from_icon_name ("go-up", GTK_ICON_SIZE_MENU);

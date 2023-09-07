@@ -46,6 +46,7 @@ gboolean check_ql(gpointer gdata){
   typHLOG *hl=(typHLOG *)gdata;
 
   if(access(hl->ql_lock,F_OK)==0){
+    hl->check_ql1=TRUE;
     switch(hl->ql_loop){
     case QL_OBJECT_BATCH:
       check_reduced_spectra(hl);
@@ -54,10 +55,16 @@ gboolean check_ql(gpointer gdata){
     return(TRUE);
   }
   else{
-    check_ql_finish(hl);
-    
-    hl->ql_timer=-1;
-    return(FALSE);
+    if(!hl->check_ql1){
+      return(TRUE);
+    }
+    else{
+      check_ql_finish(hl);
+      
+      hl->ql_timer=-1;
+      hl->check_ql1=FALSE;
+      return(FALSE);
+    }
   }
 }
 
@@ -1767,6 +1774,7 @@ void make_flat(typHLOG *hl, gchar *flat_in){
   }
 
   hl->ql_loop=QL_FLAT;
+  
   hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
   			     (gpointer)hl);
   tree_update_frame(hl);
@@ -2684,7 +2692,7 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
 					caction,
 #ifdef USE_GTK3
 					"_Cancel",GTK_RESPONSE_CANCEL,
-					"_Open", GTK_RESPONSE_ACCEPT,
+					(mode==SAVE_LOG)? "_Save" : "_Open", GTK_RESPONSE_ACCEPT,
 #else
 					  GTK_STOCK_CANCEL,GTK_RESPONSE_CANCEL,
 					GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
