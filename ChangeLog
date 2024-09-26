@@ -1,3 +1,9 @@
+2024.09.26 ver.1.5.0  - Changed default quick look to 1D spec.
+ 	              - Revised MkBlaze procedure.
+	                Automatic sample points etc.
+	                Use py scripts in GAOES-RV_ql-20240926.tar.gz .
+	              - Force to copy all py scripts to ql dir.
+
 2023.09.07 ver.1.4.4  - Added progress bar for HTTP upload.
 	              - Threading for HTTP upload.
                       - Wait lock file for the 1st reduction.

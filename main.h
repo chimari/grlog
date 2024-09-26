@@ -81,6 +81,8 @@
 #define QL_PYTHON "python3"
 #define QL_TERMINAL "xterm -geometry 85x10 -e"
 
+#define QL_BZ_SAMPLE "5140:5157,5159.5:5784.5,5787.5:5935.2,5938:5955"
+
 #define QL_ERROR_THRESHOLD 3
 
 #define AUTO_FLAT0    5
@@ -602,6 +604,11 @@ struct _typHLOG{
   gint ql_ge_line;
   gint ql_ge_stx;
   gint ql_ge_edx;
+
+  gboolean ql_bz_interact;
+  gint ql_bz_order;
+  gint ql_bz_niterate;
+  gchar *ql_bz_sample;
 
   gchar *ql_python;
   gchar *ql_terminal;

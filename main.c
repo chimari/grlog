@@ -3940,7 +3940,7 @@ void show_version (GtkWidget *widget, gpointer gdata)
  
   
   label = gtk_label_new (NULL);
-  gtk_label_set_markup (GTK_LABEL(label), "&#xA9; 2023  Akito Tajitsu");
+  gtk_label_set_markup (GTK_LABEL(label), "&#xA9; 2024  Akito Tajitsu");
 #ifdef USE_GTK3
   gtk_widget_set_halign (label, GTK_ALIGN_CENTER);
   gtk_widget_set_valign (label, GTK_ALIGN_CENTER);
@@ -4311,10 +4311,15 @@ int main(int argc, char* argv[]){
 
   hl->ql_err=0;
   
-  hl->ql_line=2;
+  hl->ql_line=0;
   hl->ql_ge_line=2;
   hl->ql_ge_stx=2150;
   hl->ql_ge_edx=2400;
+
+  hl->ql_bz_interact=TRUE;
+  hl->ql_bz_order=90;
+  hl->ql_bz_niterate=0;
+  if(!hl->ql_bz_sample) hl->ql_bz_sample=g_strdup(QL_BZ_SAMPLE);
   
   if(!hl->ql_python) hl->ql_python=g_strdup(QL_PYTHON);
   if(!hl->ql_terminal) hl->ql_terminal=g_strdup(QL_TERMINAL);

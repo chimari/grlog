@@ -515,15 +515,13 @@ void prepare_pyraf(typHLOG *hl){
 		   G_DIR_SEPARATOR_S,
 		   GAOES_PY_GRQL_BATCH,
 		   NULL);
-  if(access(dest, F_OK)!=0){
-    src=g_strconcat(hl->sdir,
-		    G_DIR_SEPARATOR_S,
-		    GAOES_PY_GRQL_BATCH,
-		    NULL);
-    copy_file(src, dest);
-    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
-    g_free(src);
-  }
+  src=g_strconcat(hl->sdir,
+		  G_DIR_SEPARATOR_S,
+		  GAOES_PY_GRQL_BATCH,
+		  NULL);
+  copy_file(src, dest);
+  chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
+  g_free(src);
   g_free(dest);
 		      
   // gaoes_flat.py
@@ -531,15 +529,13 @@ void prepare_pyraf(typHLOG *hl){
 		   G_DIR_SEPARATOR_S,
 		   GAOES_PY_FLAT,
 		   NULL);
-  if(access(dest, F_OK)!=0){
-    src=g_strconcat(hl->sdir,
-		    G_DIR_SEPARATOR_S,
-		    GAOES_PY_FLAT,
-		    NULL);
-    copy_file(src, dest);
-    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
-    g_free(src);
-  }
+  src=g_strconcat(hl->sdir,
+		  G_DIR_SEPARATOR_S,
+		  GAOES_PY_FLAT,
+		  NULL);
+  copy_file(src, dest);
+  chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
+  g_free(src);
   g_free(dest);
 		      
   // gaoes_comp.py
@@ -547,15 +543,13 @@ void prepare_pyraf(typHLOG *hl){
 		   G_DIR_SEPARATOR_S,
 		   GAOES_PY_COMP,
 		   NULL);
-  if(access(dest, F_OK)!=0){
-    src=g_strconcat(hl->sdir,
-		    G_DIR_SEPARATOR_S,
-		    GAOES_PY_COMP,
-		    NULL);
-    copy_file(src, dest);
-    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
-    g_free(src);
-  }
+  src=g_strconcat(hl->sdir,
+		  G_DIR_SEPARATOR_S,
+		  GAOES_PY_COMP,
+		  NULL);
+  copy_file(src, dest);
+  chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
+  g_free(src);
   g_free(dest);
 		      
   // gaoes_comp_obj.py
@@ -563,15 +557,13 @@ void prepare_pyraf(typHLOG *hl){
 		   G_DIR_SEPARATOR_S,
 		   GAOES_PY_COMP_OBJ,
 		   NULL);
-  if(access(dest, F_OK)!=0){
-    src=g_strconcat(hl->sdir,
-		    G_DIR_SEPARATOR_S,
-		    GAOES_PY_COMP_OBJ,
-		    NULL);
-    copy_file(src, dest);
-    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
-    g_free(src);
-  }
+  src=g_strconcat(hl->sdir,
+		  G_DIR_SEPARATOR_S,
+		  GAOES_PY_COMP_OBJ,
+		  NULL);
+  copy_file(src, dest);
+  chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
+  g_free(src);
   g_free(dest);
 		      
   // gaoes_mkmask.py
@@ -579,15 +571,13 @@ void prepare_pyraf(typHLOG *hl){
 		   G_DIR_SEPARATOR_S,
 		   GAOES_PY_MASK,
 		   NULL);
-  if(access(dest, F_OK)!=0){
-    src=g_strconcat(hl->sdir,
-		    G_DIR_SEPARATOR_S,
-		    GAOES_PY_MASK,
-		    NULL);
-    copy_file(src, dest);
-    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
-    g_free(src);
-  }
+  src=g_strconcat(hl->sdir,
+		  G_DIR_SEPARATOR_S,
+		  GAOES_PY_MASK,
+		  NULL);
+  copy_file(src, dest);
+  chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
+  g_free(src);
   g_free(dest);
 		      
   // gaoes_mkblaze.py
@@ -595,15 +585,13 @@ void prepare_pyraf(typHLOG *hl){
 		   G_DIR_SEPARATOR_S,
 		   GAOES_PY_BLAZE,
 		   NULL);
-  if(access(dest, F_OK)!=0){
-    src=g_strconcat(hl->sdir,
-		    G_DIR_SEPARATOR_S,
-		    GAOES_PY_BLAZE,
-		    NULL);
-    copy_file(src, dest);
-    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
-    g_free(src);
-  }
+  src=g_strconcat(hl->sdir,
+		  G_DIR_SEPARATOR_S,
+		  GAOES_PY_BLAZE,
+		  NULL);
+  copy_file(src, dest);
+  chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
+  g_free(src);
   g_free(dest);
 
   // gaoes_mkref.py
@@ -611,15 +599,13 @@ void prepare_pyraf(typHLOG *hl){
 		   G_DIR_SEPARATOR_S,
 		   GAOES_PY_MKREF,
 		   NULL);
-  if(access(dest, F_OK)!=0){
-    src=g_strconcat(hl->sdir,
-		    G_DIR_SEPARATOR_S,
-		    GAOES_PY_MKREF,
-		    NULL);
-    copy_file(src, dest);
-    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
-    g_free(src);
-  }
+  src=g_strconcat(hl->sdir,
+		  G_DIR_SEPARATOR_S,
+		  GAOES_PY_MKREF,
+		  NULL);
+  copy_file(src, dest);
+  chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
+  g_free(src);
   g_free(dest);
 
   // splot.py
@@ -627,15 +613,13 @@ void prepare_pyraf(typHLOG *hl){
 		   G_DIR_SEPARATOR_S,
 		   GAOES_PY_SPLOT,
 		   NULL);
-  if(access(dest, F_OK)!=0){
-    src=g_strconcat(hl->sdir,
-		    G_DIR_SEPARATOR_S,
-		    GAOES_PY_SPLOT,
-		    NULL);
-    copy_file(src, dest);
-    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
-    g_free(src);
-  }
+  src=g_strconcat(hl->sdir,
+		  G_DIR_SEPARATOR_S,
+		  GAOES_PY_SPLOT,
+		  NULL);
+  copy_file(src, dest);
+  chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH|S_IXUSR|S_IXGRP|S_IXOTH);
+  g_free(src);
   g_free(dest);
   
   // login.cl
@@ -643,15 +627,13 @@ void prepare_pyraf(typHLOG *hl){
 		   G_DIR_SEPARATOR_S,
 		   "login.cl",
 		   NULL);
-  if(access(dest, F_OK)!=0){
-    src=g_strconcat(hl->udir,
-		    G_DIR_SEPARATOR_S,
-		    "login.cl",
-		    NULL);
-    copy_file(src, dest);
-    chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
-    g_free(src);
-  }
+  src=g_strconcat(hl->udir,
+		  G_DIR_SEPARATOR_S,
+		  "login.cl",
+		  NULL);
+  copy_file(src, dest);
+  chmod(dest, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+  g_free(src);
   g_free(dest);
 }
 
@@ -1800,6 +1782,100 @@ void ql_flat_foreach (GtkTreeModel *model, GtkTreePath *path,
   g_free(flat_in);
 }
 
+
+void make_comb(typHLOG *hl, gchar *flat_in){
+  gchar *tmp;
+  gint i_sel;
+
+  switch(ql_ext_check(hl)){
+  case -1:
+    clear_ql(hl);
+    return;
+    break;
+    
+  case 0:
+  case 1:
+    hl->ql_err=0;
+    break;
+  }
+
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s %s %s %s %s %s %d %d\'",
+		      hl->ql_terminal,
+		      hl->wdir,
+		      hl->ql_python,
+		      hl->wdir,
+		      G_DIR_SEPARATOR_S,
+		      GAOES_PY_FLAT,
+		      hl->ql_lock,
+		      flat_in,
+		      hl->ddir,
+		      hl->ql_flat_new,
+		      hl->ql_ap,
+		      hl->ql_ap_new,
+		      hl->ql_st_x,
+		      hl->ql_ed_x);
+
+  if(debug_flg){
+    fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
+  }
+
+  hl->ql_loop=QL_FLAT;
+  
+  hl->ql_timer=g_timeout_add(1000, (GSourceFunc)check_ql,
+  			     (gpointer)hl);
+  tree_update_frame(hl);
+  ql_ext_play(hl, tmp);
+  
+  g_free(tmp); 
+}
+
+/*
+void ql_comb(GtkWidget *w, gpointer gdata){
+  typHLOG *hl=(typHLOG *)gdata;
+  gchar *comb_in, *comb_1d_in;
+  GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(hl->frame_tree));
+  GtkTreeSelection *selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(hl->frame_tree));
+  gint i_rows;
+
+  i_rows=gtk_tree_selection_count_selected_rows (selection);
+
+  comb_in=g_strdup_printf("%s%scomb.in",
+			  hl->wdir,
+			  G_DIR_SEPARATOR_S);
+  if(access(comb_in, F_OK)==0){
+    unlink(comb_in);
+  }
+
+  comb_1d_in=g_strdup_printf("%s%scomb_1d.in",
+			     hl->wdir,
+			     G_DIR_SEPARATOR_S);
+  if(access(comb_1d_in, F_OK)==0){
+    unlink(comb_1d_in);
+  }
+  
+  gtk_tree_selection_selected_foreach (selection, ql_comb_foreach, (gpointer)hl);
+
+  if((access(comb_in, F_OK)==0)&&(access(comb_1d_in, F_OK)==0)){
+    make_comb(hl, comb_in, comb_1d_in);
+  }
+  else{
+    popup_message(hl->w_top, 
+#ifdef USE_GTK3
+		  "dialog-error", 
+#else
+		  GTK_STOCK_DIALOG_ERROR,
+#endif
+		  -1,
+		  flat_in,
+		  " ",
+		  "Failed to create a Combined spectrum.",
+		  NULL);
+  }
+  g_free(flat_in);
+}
+*/
+
+
 void ql_flat_red(GtkWidget *w, gpointer gdata){
   typHLOG *hl=(typHLOG *)gdata;
   gchar *flat_in;
@@ -2427,7 +2503,7 @@ void iraf_blaze(typHLOG *hl, gint i_sel, glong i_file){
   if(hl->ql_blaze_new) g_free(hl->ql_blaze_new);
   hl->ql_blaze_new=g_strdup_printf("cBlaze.%08ld", hl->frame[i_sel].idnum);
 
-  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s G%08ldocs_ecfw %s %s\'",
+  tmp=g_strdup_printf("%s \'cd %s;%s %s%s%s %s G%08ldocs_ecfw %s %s %s %d %d %s\'",
 		      hl->ql_terminal,
 		      hl->wdir,
 		      hl->ql_python,
@@ -2437,7 +2513,11 @@ void iraf_blaze(typHLOG *hl, gint i_sel, glong i_file){
 		      hl->ql_lock,
 		      hl->frame[i_sel].idnum,
 		      hl->ql_blaze_new,
-		      hl->ql_mask);
+		      hl->ql_mask,
+		      (hl->ql_bz_interact)?"yes":"no",
+		      hl->ql_bz_order,
+		      hl->ql_bz_niterate,
+		      hl->ql_bz_sample);
 
   if(debug_flg){
     fprintf(stderr,"!!!Open PyRAF terminal\n%s\n",tmp);
@@ -2694,7 +2774,7 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
 					"_Cancel",GTK_RESPONSE_CANCEL,
 					(mode==SAVE_LOG)? "_Save" : "_Open", GTK_RESPONSE_ACCEPT,
 #else
-					  GTK_STOCK_CANCEL,GTK_RESPONSE_CANCEL,
+					GTK_STOCK_CANCEL,GTK_RESPONSE_CANCEL,
 					GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
 #endif
 					NULL);
@@ -2970,6 +3050,9 @@ void grlog_OpenFile(typHLOG *hl, guint mode){
     else{
       if(mode==SAVE_LOG){
 	  FILE *fp;
+	  if(*tgt_file) g_free(*tgt_file);
+	  *tgt_file=g_strdup(dest_file);
+	  tgt_dir=g_path_get_dirname(*tgt_file);
 
 	  if((fp=fopen(*tgt_file, "w"))!=NULL){
 	  
@@ -3043,7 +3126,8 @@ void edit_blaze (GtkWidget *widget, gpointer gdata)
 void edit_cal(GtkWidget *w, gpointer gdata){
   typHLOG *hl=(typHLOG *)gdata;
   GtkWidget *dialog, *label, *frame, *combo, *hbox, 
-    *vbox, *hbox1, *entry, *button, *table;
+    *vbox, *hbox1, *entry, *button, *table, *check, *spinner;
+  GtkAdjustment *adj;
   gchar *tmp;
       
   dialog = gtk_dialog_new_with_buttons("GAOES-RV Log Editor : CAL frames for quick look",
@@ -3213,7 +3297,7 @@ void edit_cal(GtkWidget *w, gpointer gdata){
 
   hl->label_edit_blaze=gtkut_label_new("Blaze Function");
   set_blaze_label(hl);
-
+  
 #ifdef USE_GTK3
   gtk_widget_set_halign (hl->label_edit_blaze, GTK_ALIGN_START);
   gtk_widget_set_valign (hl->label_edit_blaze, GTK_ALIGN_CENTER);
@@ -3232,6 +3316,68 @@ void edit_cal(GtkWidget *w, gpointer gdata){
   		    G_CALLBACK (edit_blaze), (gpointer)hl);
 
 
+  frame = gtkut_frame_new ("<b> Parameters for MkBlaze</b>");
+  gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(dialog))),
+		     frame,FALSE, FALSE, 0);
+  gtk_container_set_border_width (GTK_CONTAINER (frame), 5);
+
+  vbox = gtkut_vbox_new(FALSE,2);
+  gtk_container_set_border_width (GTK_CONTAINER (vbox), 5);
+  gtk_container_add (GTK_CONTAINER (frame), vbox);
+
+  hbox = gtkut_hbox_new(FALSE,2);
+  gtk_container_set_border_width (GTK_CONTAINER (hbox), 5);
+  gtk_box_pack_start(GTK_BOX(vbox), hbox,FALSE, FALSE, 5);
+
+  check = gtk_check_button_new_with_label("Interact");
+  gtk_box_pack_start(GTK_BOX(hbox),check,FALSE,FALSE,0);
+  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(check), hl->ql_bz_interact);
+  g_signal_connect (check, "toggled",
+		    G_CALLBACK (cc_get_toggle),
+		    &hl->ql_bz_interact);
+
+  label=gtkut_label_new("   order");
+  gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);
+
+  adj = (GtkAdjustment *)gtk_adjustment_new(hl->ql_bz_order,
+					    10,100,
+					    1.0, 1.0, 0);
+  spinner =  gtk_spin_button_new (adj, 0, 0);
+  gtk_spin_button_set_wrap (GTK_SPIN_BUTTON (spinner), FALSE);
+  gtk_box_pack_start(GTK_BOX(hbox),spinner,FALSE,FALSE,0);
+  g_signal_connect (adj, "value_changed",
+		    G_CALLBACK (cc_get_adj),
+		    &hl->ql_bz_order);
+
+  label=gtkut_label_new("   niterate");
+  gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);
+  
+  adj = (GtkAdjustment *)gtk_adjustment_new(hl->ql_bz_niterate,
+					    0,10,
+					    1.0, 1.0, 0);
+  spinner =  gtk_spin_button_new (adj, 0, 0);
+  gtk_spin_button_set_wrap (GTK_SPIN_BUTTON (spinner), FALSE);
+  gtk_box_pack_start(GTK_BOX(hbox),spinner,FALSE,FALSE,0);
+  g_signal_connect (adj, "value_changed",
+		    G_CALLBACK (cc_get_adj),
+		    &hl->ql_bz_niterate);
+
+  hbox = gtkut_hbox_new(FALSE,2);
+  gtk_container_set_border_width (GTK_CONTAINER (hbox), 5);
+  gtk_box_pack_start(GTK_BOX(vbox), hbox,FALSE, FALSE, 5);
+
+  label=gtkut_label_new("sample");
+  gtk_box_pack_start(GTK_BOX(hbox),label,FALSE,FALSE,0);
+
+  entry = gtk_entry_new ();
+  gtk_box_pack_start(GTK_BOX(hbox),entry,FALSE,FALSE,0);
+  gtk_entry_set_width_chars(GTK_ENTRY(entry),50);
+  gtk_entry_set_text(GTK_ENTRY(entry), hl->ql_bz_sample);
+  g_signal_connect (entry,
+		    "changed",
+		    G_CALLBACK(cc_get_entry),
+		    &hl->ql_bz_sample);
+  
   gtk_widget_show_all(dialog);
 
   gtk_dialog_run(GTK_DIALOG(dialog));
