@@ -348,13 +348,13 @@ void check_reference_data(typHLOG *hl){
   // Ap
   ap_fits=g_strconcat(hl->wdir,
 		      G_DIR_SEPARATOR_S,
-		      GAOES_AP,
+		      hl->def_ap,
 		      ".fits",
 		      NULL);
   if(access(ap_fits, F_OK)!=0){
     ap_fits0=g_strconcat(hl->sdir,
 			 G_DIR_SEPARATOR_S,
-			 GAOES_AP,
+			 hl->def_ap,
 			 ".fits",
 			 NULL);
     copy_file(ap_fits0, ap_fits);
@@ -368,7 +368,7 @@ void check_reference_data(typHLOG *hl){
 		    "database",
 		    G_DIR_SEPARATOR_S,
 		    "ap",
-		    GAOES_AP,
+		    hl->def_ap,
 		    NULL);
   if(access(ap_db, F_OK)!=0){
     ap_db0=g_strconcat(hl->sdir,
@@ -376,7 +376,7 @@ void check_reference_data(typHLOG *hl){
 		       "database",
 		       G_DIR_SEPARATOR_S,
 		       "ap",
-		       GAOES_AP,
+		       hl->def_ap,
 		       NULL);
     copy_file(ap_db0, ap_db);
     g_free(ap_db0);
@@ -386,13 +386,13 @@ void check_reference_data(typHLOG *hl){
   // Flat
   fl_fits=g_strconcat(hl->wdir,
 		      G_DIR_SEPARATOR_S,
-		      GAOES_FLAT,
+		      hl->def_flat,
 		      ".fits",
 		      NULL);
   if(access(fl_fits, F_OK)!=0){
     fl_fits0=g_strconcat(hl->sdir,
 			 G_DIR_SEPARATOR_S,
-			 GAOES_FLAT,
+			 hl->def_flat,
 			 ".fits",
 			 NULL);
     copy_file(fl_fits0, fl_fits);
@@ -403,13 +403,13 @@ void check_reference_data(typHLOG *hl){
   // ThAr 1D
   ec_fits=g_strconcat(hl->wdir,
 		      G_DIR_SEPARATOR_S,
-		      GAOES_THAR1D,
+		      hl->def_thar1d,
 		      ".fits",
 		      NULL);
   if(access(ec_fits, F_OK)!=0){
     ec_fits0=g_strconcat(hl->sdir,
 			 G_DIR_SEPARATOR_S,
-			 GAOES_THAR1D,
+			 hl->def_thar1d,
 			 ".fits",
 			 NULL);
     copy_file(ec_fits0, ec_fits);
@@ -423,7 +423,7 @@ void check_reference_data(typHLOG *hl){
 		    "database",
 		    G_DIR_SEPARATOR_S,
 		    "ec",
-		    GAOES_THAR1D,
+		    hl->def_thar1d,
 		    NULL);
   if(access(ec_db, F_OK)!=0){
     ec_db0=g_strconcat(hl->sdir,
@@ -431,7 +431,7 @@ void check_reference_data(typHLOG *hl){
 		       "database",
 		       G_DIR_SEPARATOR_S,
 		       "ec",
-		       GAOES_THAR1D,
+		       hl->def_thar1d,
 		       NULL);
     copy_file(ec_db0, ec_db);
     g_free(ec_db0);
@@ -441,13 +441,13 @@ void check_reference_data(typHLOG *hl){
   // ThAr 2D
   ec2_fits=g_strconcat(hl->wdir,
 		      G_DIR_SEPARATOR_S,
-		      GAOES_THAR2D,
+		       hl->def_thar2d,
 		      ".fits",
 		      NULL);
   if(access(ec2_fits, F_OK)!=0){
     ec2_fits0=g_strconcat(hl->sdir,
 			 G_DIR_SEPARATOR_S,
-			 GAOES_THAR2D,
+			  hl->def_thar2d,
 			 ".fits",
 			 NULL);
     copy_file(ec2_fits0, ec2_fits);
@@ -458,13 +458,13 @@ void check_reference_data(typHLOG *hl){
   // Mask
   ms_fits=g_strconcat(hl->wdir,
 		      G_DIR_SEPARATOR_S,
-		      GAOES_MASK,
+		      hl->def_mask,
 		      ".fits",
 		      NULL);
   if(access(ms_fits, F_OK)!=0){
     ms_fits0=g_strconcat(hl->sdir,
 			 G_DIR_SEPARATOR_S,
-			 GAOES_MASK,
+			 hl->def_mask,
 			 ".fits",
 			 NULL);
     copy_file(ms_fits0, ms_fits);
@@ -475,13 +475,13 @@ void check_reference_data(typHLOG *hl){
   // Blaze
   bz_fits=g_strconcat(hl->wdir,
 		      G_DIR_SEPARATOR_S,
-		      GAOES_BLAZE,
+		      hl->def_blaze,
 		      ".fits",
 		      NULL);
   if(access(bz_fits, F_OK)!=0){
     bz_fits0=g_strconcat(hl->sdir,
 			 G_DIR_SEPARATOR_S,
-			 GAOES_BLAZE,
+			 hl->def_blaze,
 			 ".fits",
 			 NULL);
     copy_file(bz_fits0, bz_fits);
@@ -1593,7 +1593,7 @@ void iraf_flat(typHLOG *hl, gint i_sel, glong i_file, gchar *flat_in){
 
       // Use default ap
       g_free(hl->ql_ap);
-      hl->ql_ap=g_strdup(GAOES_AP);     
+      hl->ql_ap=g_strdup(hl->def_ap);     
     }
   }
   
@@ -1973,7 +1973,7 @@ void iraf_flat_auto(typHLOG *hl){
 
       // Use default ap
       g_free(hl->ql_ap);
-      hl->ql_ap=g_strdup(GAOES_AP);     
+      hl->ql_ap=g_strdup(hl->def_ap);     
     }
   }
   
@@ -2237,7 +2237,7 @@ void iraf_thar(typHLOG *hl, gint i_sel, glong i_file){
     
     // Use default ec
     g_free(hl->ql_thar1d);
-    hl->ql_thar1d=g_strdup(GAOES_THAR1D);
+    hl->ql_thar1d=g_strdup(hl->def_thar1d);
   }
   g_free(tmp_thar1d);
   
@@ -2334,7 +2334,7 @@ void iraf_thar_obj(typHLOG *hl, gint i_sel, glong i_file){
     
     // Use default ec
     g_free(hl->ql_thar1d);
-    hl->ql_thar1d=g_strdup(GAOES_THAR1D);
+    hl->ql_thar1d=g_strdup(hl->def_thar1d);
   }
   g_free(tmp_thar1d);
   

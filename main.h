@@ -658,6 +658,13 @@ struct _typHLOG{
   GtkWidget *plabel3;
 
   gint up_i;
+
+  gchar *def_ap;
+  gchar *def_flat;
+  gchar *def_thar1d;
+  gchar *def_thar2d;
+  gchar *def_mask;
+  gchar *def_blaze;
 };
 
 

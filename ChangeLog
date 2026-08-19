@@ -1,3 +1,6 @@
+2026.08.19 ver.1.6.0  - Added Default CAL settings in config file to adjust
+                        format shift caused by maintenance works.
+
 2024.09.26 ver.1.5.0  - Changed default quick look to 1D spec.
  	              - Revised MkBlaze procedure.
 	                Automatic sample points etc.

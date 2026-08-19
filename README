@@ -3,8 +3,8 @@
 #                         Document file                                  #
 #                                                                        # 
 #                                                                        # 
-#                                  ver 1.5.0 2024/09/26                  #
-#                               Copyright (C) 2024 Akito Tajitsu         #
+#                                  ver 1.6.0 2026/08/19                  #
+#                               Copyright (C) 2026 Akito Tajitsu         #
 #      Subaru Telescope, National Astronomical Observatory of Japan      #
 #                                        akito.tajitsu_at_nao.ac.jp      # 
 ##########################################################################
@@ -70,6 +70,22 @@ You can copy this file to other directory as you like.
    HOME$Log/.grlog-yyyymmdd
   will be created.
   This file remains even after the program finished.
+
+
+## Setups for Default CAL files
+  The default CAL files are specified in 
+   HOME$/.grlof.conf
+  If you wish to change this setting, please modify the following
+  specification in this file.
+    [DefaultCAL]
+    Aperture=Ap.GAOES-RV.f8
+    Flat=Flat.GAOES-RV.f8.sc.nm
+    Thar1D=ThAr.GAOES-RV.f8.center
+    Thar2D=ThAr.GAOES-RV.f8
+    Mask=Mask.GAOES-RV.ocs_ecfw
+    Blaze=cBlaze.GAOES-RV.f8
+  Recommended settings vary depending on the observation date; for details,
+  please visit the analysis page on the GAOES-RV website.
 
 
 ## Mail address list

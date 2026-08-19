@@ -749,12 +749,32 @@ void save_cfg (typHLOG *hl)
   xmms_cfg_write_string(cfgfile, "Directory",
 			"User",hl->udir);
 
+
   xmms_cfg_write_string(cfgfile, "PyRAF",
 			"Terminal",hl->ql_terminal);
   
   xmms_cfg_write_string(cfgfile, "PyRAF",
 			"Python",hl->ql_python);
   
+
+  xmms_cfg_write_string(cfgfile, "DefaultCAL",
+			"Aperture",hl->def_ap);
+  
+  xmms_cfg_write_string(cfgfile, "DefaultCAL",
+			"Flat",hl->def_flat);
+  
+  xmms_cfg_write_string(cfgfile, "DefaultCAL",
+			"Thar1D",hl->def_thar1d);
+  
+  xmms_cfg_write_string(cfgfile, "DefaultCAL",
+			"Thar2D",hl->def_thar2d);
+  
+  xmms_cfg_write_string(cfgfile, "DefaultCAL",
+			"Mask",hl->def_mask);
+  
+  xmms_cfg_write_string(cfgfile, "DefaultCAL",
+			"Blaze",hl->def_blaze);
+
   xmms_cfg_write_file(cfgfile, filename);
   xmms_cfg_free(cfgfile);
   g_free(filename);
@@ -1074,6 +1094,7 @@ static void load_cfg (typHLOG *hl)
 	hl->udir=g_strdup(c_buf);
       }
     }
+    
       
     if(xmms_cfg_read_string(cfgfile, "PyRAF",
 			    "Terminal",&c_buf)){
@@ -1082,6 +1103,50 @@ static void load_cfg (typHLOG *hl)
     if(xmms_cfg_read_string(cfgfile, "PyRAF",
 			    "Python",&c_buf)){
       hl->ql_python=g_strdup(c_buf);
+    }
+
+    
+    if(xmms_cfg_read_string(cfgfile, "DefaultCAL",
+			    "Aperture",&c_buf)){
+      hl->def_ap=g_strdup(c_buf);
+    }
+    else{
+      hl->def_ap=g_strdup(GAOES_AP);
+    }
+    if(xmms_cfg_read_string(cfgfile, "DefaultCAL",
+			    "Flat",&c_buf)){
+      hl->def_flat=g_strdup(c_buf);
+    }
+    else{
+      hl->def_flat=g_strdup(GAOES_FLAT);
+    }
+    if(xmms_cfg_read_string(cfgfile, "DefaultCAL",
+			    "Thar1D",&c_buf)){
+      hl->def_thar1d=g_strdup(c_buf);
+    }
+    else{
+      hl->def_thar1d=g_strdup(GAOES_THAR1D);
+    }
+    if(xmms_cfg_read_string(cfgfile, "DefaultCAL",
+			    "Thar2D",&c_buf)){
+      hl->def_thar2d=g_strdup(c_buf);
+    }
+    else{
+      hl->def_thar2d=g_strdup(GAOES_THAR2D);
+    }
+    if(xmms_cfg_read_string(cfgfile, "DefaultCAL",
+			    "Mask",&c_buf)){
+      hl->def_mask=g_strdup(c_buf);
+    }
+    else{
+      hl->def_mask=g_strdup(GAOES_MASK);
+    }
+    if(xmms_cfg_read_string(cfgfile, "DefaultCAL",
+			    "Blaze",&c_buf)){
+      hl->def_blaze=g_strdup(c_buf);
+    }
+    else{
+      hl->def_blaze=g_strdup(GAOES_BLAZE);
     }
 
     xmms_cfg_free(cfgfile);
@@ -3940,7 +4005,7 @@ void show_version (GtkWidget *widget, gpointer gdata)
  
   
   label = gtk_label_new (NULL);
-  gtk_label_set_markup (GTK_LABEL(label), "&#xA9; 2024  Akito Tajitsu");
+  gtk_label_set_markup (GTK_LABEL(label), "&#xA9; 2026  Akito Tajitsu");
 #ifdef USE_GTK3
   gtk_widget_set_halign (label, GTK_ALIGN_CENTER);
   gtk_widget_set_valign (label, GTK_ALIGN_CENTER);
