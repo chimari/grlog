@@ -1151,6 +1151,15 @@ static void load_cfg (typHLOG *hl)
 
     xmms_cfg_free(cfgfile);
   }
+  else{
+    hl->def_ap=g_strdup(GAOES_AP);
+    hl->def_flat=g_strdup(GAOES_FLAT);
+    hl->def_thar1d=g_strdup(GAOES_THAR1D);
+    hl->def_thar2d=g_strdup(GAOES_THAR2D);
+    hl->def_mask=g_strdup(GAOES_MASK);
+    hl->def_blaze=g_strdup(GAOES_BLAZE);
+  }
+   
   g_free(filename);
 }
 
@@ -4361,12 +4370,12 @@ int main(int argc, char* argv[]){
   hl->done_flat=0;
   hl->done_thar=0;
   
-  hl->ql_thar1d=g_strdup(GAOES_THAR1D);
-  hl->ql_thar2d=g_strdup(GAOES_THAR2D);
-  hl->ql_flat=g_strdup(GAOES_FLAT);
-  hl->ql_ap=g_strdup(GAOES_AP);
-  hl->ql_mask=g_strdup(GAOES_MASK);
-  hl->ql_blaze=g_strdup(GAOES_BLAZE);
+  hl->ql_thar1d=g_strdup(hl->def_thar1d);
+  hl->ql_thar2d=g_strdup(hl->def_thar2d);
+  hl->ql_flat=g_strdup(hl->def_flat);
+  hl->ql_ap=g_strdup(hl->def_ap);
+  hl->ql_mask=g_strdup(hl->def_mask);
+  hl->ql_blaze=g_strdup(hl->def_blaze);
   hl->ql_thar_new=NULL;
   hl->ql_flat_new=NULL;
   hl->ql_ap_new=NULL;
